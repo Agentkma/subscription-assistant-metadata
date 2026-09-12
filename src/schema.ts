@@ -18,7 +18,21 @@ export const providerSchema = {
     version: { type: 'string', minLength: 1 },
     provider_id: { type: 'string', minLength: 1 },
     name: { type: 'string', minLength: 1 },
-    category: { type: 'string', minLength: 1 },
+    category: {
+      type: 'string',
+      enum: [
+        'streaming',
+        'music_audio',
+        'productivity',
+        'fitness_wellness',
+        'learning',
+        'gaming',
+        'news_reading',
+        'utilities_tools',
+        'lifestyle',
+        'shopping_memberships'
+      ]
+    },
     regions: {
       type: 'array',
       items: { type: 'string', enum: ['US', 'CA', 'UK', 'EU', 'AU', 'GLOBAL'] },

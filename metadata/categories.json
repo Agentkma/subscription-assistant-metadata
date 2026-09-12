@@ -1,0 +1,62 @@
+[
+  {
+    "id": "streaming",
+    "name": "Streaming",
+    "display_name": "Streaming",
+    "provider_count": 12
+  },
+  {
+    "id": "music_audio",
+    "name": "Music & Audio",
+    "display_name": "Music & Audio",
+    "provider_count": 6
+  },
+  {
+    "id": "productivity",
+    "name": "Productivity",
+    "display_name": "Productivity",
+    "provider_count": 10
+  },
+  {
+    "id": "fitness_wellness",
+    "name": "Fitness & Wellness",
+    "display_name": "Fitness & Wellness",
+    "provider_count": 8
+  },
+  {
+    "id": "learning",
+    "name": "Learning",
+    "display_name": "Learning",
+    "provider_count": 8
+  },
+  {
+    "id": "gaming",
+    "name": "Gaming",
+    "display_name": "Gaming",
+    "provider_count": 6
+  },
+  {
+    "id": "news_reading",
+    "name": "News & Reading",
+    "display_name": "News & Reading",
+    "provider_count": 8
+  },
+  {
+    "id": "utilities_tools",
+    "name": "Utilities & Tools",
+    "display_name": "Utilities & Tools",
+    "provider_count": 10
+  },
+  {
+    "id": "lifestyle",
+    "name": "Lifestyle",
+    "display_name": "Lifestyle",
+    "provider_count": 8
+  },
+  {
+    "id": "shopping_memberships",
+    "name": "Shopping & Memberships",
+    "display_name": "Shopping & Memberships",
+    "provider_count": 8
+  }
+]

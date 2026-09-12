@@ -55,6 +55,38 @@ Each provider record should include:
 - intelligence
 - recommendations
 
+### MVP category catalog
+
+The MVP should support the following canonical category IDs and content coverage list:
+
+- streaming
+- music_audio
+- productivity
+- fitness_wellness
+- learning
+- gaming
+- news_reading
+- utilities_tools
+- lifestyle
+- shopping_memberships
+
+This category catalog is the source of truth for category browsing and filtering in the private app. It also defines the metadata coverage targets used for the early public bundle.
+
+The corresponding coverage groups for the MVP are:
+
+- streaming: Netflix, Hulu, Disney+, Max, Prime Video, Apple TV+, Paramount+, Peacock, YouTube Premium, Crunchyroll, Starz, Showtime
+- music_audio: Spotify, Apple Music, YouTube Music, Audible, SiriusXM, Pandora
+- productivity: Google Workspace, Microsoft 365, Dropbox, Evernote, Notion, Todoist, Slack, Zoom, Grammarly, 1Password Teams
+- fitness_wellness: Peloton, Calm, Headspace, Fitbod, MyFitnessPal, Noom, Strava, Alo Moves
+- learning: Duolingo, Babbel, Skillshare, MasterClass, Coursera, Udemy, Chegg, Rosetta Stone
+- gaming: Xbox Game Pass, PlayStation Plus, Nintendo Switch Online, EA Play, Ubisoft+, GeForce NOW
+- news_reading: New York Times, Wall Street Journal, Washington Post, The Economist, NYT Cooking, Medium, Kindle Unlimited, Scribd
+- utilities_tools: Adobe Creative Cloud, Canva, 1Password, NordVPN, ExpressVPN, GitHub, Notion AI, ChatGPT Plus, Dropbox, LastPass
+- lifestyle: Paprika, YNAB, Cozi, NYT Cooking, Calm, Headspace, Blue Apron, HelloFresh
+- shopping_memberships: Amazon Prime, Walmart+, Instacart+, Costco Membership, Sam's Club Membership, Chewy Autoship, DoorDash DashPass, Uber One
+
+These category lists are intentionally coverage-oriented and can include a few overlapping providers where a service sits across multiple user behaviors. The provider record itself still keeps one canonical category for validation and downstream app consumption.
+
 ### Provider logo object
 
 - source
