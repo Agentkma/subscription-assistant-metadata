@@ -21,6 +21,12 @@ It does not contain:
 - user input mapping
 - private application business rules
 
+## Current focus
+
+This repository is currently focused on the real-source metadata intake phase. The priority is to define and complete the canonical category catalog, then collect verified public provider data using a source checklist before implementing any automation workflow.
+
+The automation layer is intentionally deferred. We are not yet building fetch/update logic or sync scripts; the immediate work is to validate the category coverage, confirm official provider sources, and verify the public URLs and metadata before publishing the bundle.
+
 ## Metadata model
 
 The bundle is built around provider metadata for subscription services, including:

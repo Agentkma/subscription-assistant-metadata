@@ -13,6 +13,20 @@ Build a public metadata repository for SubSage that publishes a single, versione
 - Provider-based metadata structure, with one JSON file per provider
 - No value-score engine, insight engine, or app behavior in this repo
 
+## Current implementation focus
+
+The repo is currently in the real-source data intake phase. The immediate priority is to finalize the canonical categories and catalog, then collect source-backed provider data using a checklist before any automation is built.
+
+This phase intentionally excludes fetch/update automation. We are not building ingestion scripts, update jobs, or any automated metadata sync yet. The current work is to confirm the correct catalog, collect official provider source URLs and metadata, and validate the data before moving into the automation stage.
+
+The active focus is:
+
+- confirm the canonical category catalog and coverage targets
+- define the provider source checklist for every target provider
+- gather official pricing, help, cancellation, and logo sources
+- validate the recorded URLs and metadata against the schema
+- postpone automated workflows until the source data is complete and verified
+
 ## Core product context
 
 SubSage is a privacy-first subscription intelligence app. It does not connect to bank accounts or scrape usage data. All intelligence comes from a public metadata bundle hosted on GitHub Pages. The app consumes metadata for pricing, friction, seasonal value patterns, alternatives, and trigger conditions, then combines that with user input to calculate a value score in the private app repository.
