@@ -22,12 +22,17 @@ export interface ProviderLogo {
   fallback_icon?: string | null;
 }
 
+export type UrlVisibility = 'public' | 'account_required' | 'unknown';
+
 export interface ProviderPlan {
   plan_id: string;
   name: string;
   billing_cycle: BillingCycle;
   base_price_usd: number;
   price_last_updated: string;
+  notes?: string;
+  url_visibility?: UrlVisibility;
+  urls?: ProviderUrls;
 }
 
 export interface ProviderUrls {

@@ -22,14 +22,42 @@
         "name": "Amazon Prime (Monthly)",
         "billing_cycle": "monthly",
         "base_price_usd": 9.99,
-        "price_last_updated": "2026-09-12"
+        "price_last_updated": "2026-09-12",
+        "notes": "Prime Video bundled with Amazon Prime membership.",
+        "url_visibility": "public",
+        "urls": {
+          "pricing": "https://www.amazon.us/prime",
+          "cancellation": "https://www.amazon.com/gp/help/customer/display.html?nodeId=GZLQX3F4FJQ2K2K4",
+          "help_center": "https://www.primevideo.com/help"
+        }
       },
       {
         "plan_id": "prime_bundle_yearly",
         "name": "Amazon Prime (Yearly)",
         "billing_cycle": "yearly",
         "base_price_usd": 99,
-        "price_last_updated": "2026-09-12"
+        "price_last_updated": "2026-09-12",
+        "notes": "Annual Amazon Prime membership that includes Prime Video.",
+        "url_visibility": "public",
+        "urls": {
+          "pricing": "https://www.amazon.us/prime",
+          "cancellation": "https://www.amazon.com/gp/help/customer/display.html?nodeId=GZLQX3F4FJQ2K2K4",
+          "help_center": "https://www.primevideo.com/help"
+        }
+      },
+      {
+        "plan_id": "prime_video_ultra",
+        "name": "Prime Video Ultra (Ad-Free)",
+        "billing_cycle": "monthly",
+        "base_price_usd": 4.99,
+        "price_last_updated": "2026-09-12",
+        "notes": "Ad-free upgrade; requires Prime or Prime Video subscription.",
+        "url_visibility": "account_required",
+        "urls": {
+          "pricing": null,
+          "cancellation": null,
+          "help_center": null
+        }
       }
     ],
     "urls": {

@@ -29,7 +29,18 @@ const providerMetaSchema = {
           name: { type: 'string', minLength: 1 },
           billing_cycle: { type: 'string', enum: ['monthly', 'yearly', 'weekly', 'quarterly'] },
           base_price_usd: { type: 'number' },
-          price_last_updated: { type: 'string', minLength: 1 }
+          price_last_updated: { type: 'string', minLength: 1 },
+          notes: { type: ['string', 'null'] },
+          url_visibility: { type: 'string', enum: ['public', 'account_required', 'unknown'] },
+          urls: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              pricing: { type: ['string', 'null'], minLength: 1 },
+              cancellation: { type: ['string', 'null'], minLength: 1 },
+              help_center: { type: ['string', 'null'], minLength: 1 }
+            }
+          }
         }
       }
     },
