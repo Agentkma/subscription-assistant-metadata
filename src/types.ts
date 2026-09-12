@@ -32,6 +32,7 @@ export interface ProviderPlan {
   price_last_updated: string;
   notes?: string;
   url_visibility?: UrlVisibility;
+  access_hint?: string | null;
   urls?: ProviderUrls;
 }
 

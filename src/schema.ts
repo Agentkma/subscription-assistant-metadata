@@ -32,6 +32,7 @@ const providerMetaSchema = {
           price_last_updated: { type: 'string', minLength: 1 },
           notes: { type: ['string', 'null'] },
           url_visibility: { type: 'string', enum: ['public', 'account_required', 'unknown'] },
+          access_hint: { type: ['string', 'null'], minLength: 1 },
           urls: {
             type: 'object',
             additionalProperties: false,

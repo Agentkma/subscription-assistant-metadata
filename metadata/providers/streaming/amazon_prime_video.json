@@ -53,6 +53,7 @@
         "price_last_updated": "2026-09-12",
         "notes": "Ad-free upgrade; requires Prime or Prime Video subscription.",
         "url_visibility": "account_required",
+        "access_hint": "Manage this benefit in your Amazon account under Memberships and subscriptions.",
         "urls": {
           "pricing": null,
           "cancellation": null,
