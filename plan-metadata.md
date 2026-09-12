@@ -10,6 +10,7 @@ Build a public metadata repository for SubSage that publishes a single, versione
 - Single published bundle for downstream app consumption
 - TypeScript-first tooling for validation and build generation
 - GitHub Pages as the distribution mechanism
+- Provider-based metadata structure, with one JSON file per provider
 - No value-score engine, insight engine, or app behavior in this repo
 
 ## Core product context
@@ -36,90 +37,97 @@ SubSage is a privacy-first subscription intelligence app. It does not connect to
 
 ## Metadata contract
 
-The published bundle should include at least the following top-level concepts:
+The public repo will use a provider-first metadata design. Each provider represents one subscription service and is stored as its own file under a provider directory. These files are later merged into a single published bundle.
 
-### Subscription object
+### Recommended provider schema
 
-- id
+Each provider record should include:
+
+- version
+- provider_id
 - name
-- categoryId
-- description
+- category
+- regions[]
+- supported
 - logo
-- pricing
-- friction
-- seasonal
-- alternatives
-- insightTriggers
+- plans[]
+- urls
+- intelligence
+- recommendations
 
-### Pricing object
+### Provider logo object
 
-- basePrice
-- tiers[]
-- regionSupport
-- billingCycle
-- notes
+- source
+- app_store_id
+- play_store_package
+- cdn_url
+- fallback_icon
 
-### Friction object
+### Plan object
 
-- cancellationDifficulty (1–5)
-- supportResponsiveness (1–5)
-- refundPolicy (enum)
-- notes
-
-### Seasonal object
-
-- highValueMonths[]
-- lowValueMonths[]
-- notes
-
-### Alternatives object
-
-- competitorId
-- priceComparison
-- featureComparison
-- notes
-
-### InsightTriggers
-
-- overpricedThreshold
-- underusedThreshold
-- seasonalDropThreshold
-- frictionWarningThreshold
-
-### Category object
-
-- id
+- plan_id
 - name
-- description
-- icon
+- billing_cycle
+- base_price_usd
+- price_last_updated
 
-### Value weight contract (metadata-driven)
+### URLs object
 
-This repo can include the value weight definitions for downstream consumption, but it should not contain scoring logic itself.
+- pricing
+- cancellation
+- help_center
 
-- satisfactionWeight
-- relianceWeight
-- usageFrequencyWeight
-- priceSensitivityWeight
-- frictionWeight
-- seasonalWeight
-- alternativesWeight
+### Intelligence object
+
+- seasonal_pattern
+- value_drift_signals[]
+- cancellation_difficulty
+- benchmark_anchor
+- price_trend
+
+### Recommendations object
+
+- alternatives[]
+- upgrade_paths[]
+
+### Benchmark anchor object
+
+- category_rank
+- value_score_baseline
+
+### Price trend object
+
+- trend
+- last_increase
+- increase_percent
+
+### Notes on schema evolution
+
+- This dataset is intentionally provider-centric rather than app-centric
+- It should support deterministic automation and validation
+- Intelligence fields are computed in the metadata pipeline, not in the app repo
+- The app repo consumes the final merged result, not the raw provider files directly
 
 ## Recommended architecture
 
 ### Repo layout
 
+- metadata/
+  - providers/
+    - netflix.json
+    - spotify.json
+    - ...
+  - categories.json
+  - schema/
+    - provider-schema.json
 - src/
   - schema/
   - types/
   - validators/
   - builders/
   - utils/
-- data/
-  - categories.json
-  - subscriptions.json
 - dist/
-  - metadata.bundle.json
+  - providers.json
   - version.json
 - .github/workflows/
   - publish-metadata.yml
@@ -130,16 +138,16 @@ This repo can include the value weight definitions for downstream consumption, b
 ### Build approach
 
 - Use TypeScript for validation logic and build scripts
-- Validate JSON against a schema before publishing
-- Generate a single bundle artifact from the canonical metadata source
-- Emit a version manifest alongside the bundle
+- Store provider metadata as file-per-provider JSON under metadata/providers
+- Validate each provider file against the schema before merge
+- Aggregate providers into a single dist/providers.json artifact
+- Emit a version manifest alongside the final bundle
 
 ## Recommended validation stack
 
 Use a TypeScript-friendly runtime validation setup such as:
 
 - TypeScript + JSON Schema validation via AJV
-- or TypeBox if you want a more strongly typed runtime schema model
 
 This repo should prioritize clarity and maintainability over complexity.
 
@@ -154,8 +162,10 @@ The bundle should be one publicly served JSON payload rather than multiple fragm
 
 A likely output shape:
 
-- dist/metadata.bundle.json
+- dist/providers.json
 - dist/version.json
+
+This is the file the app consumes at runtime.
 
 ## Versioning model
 
@@ -197,69 +207,94 @@ This allows the consuming app to detect both content updates and structural comp
 
 ### GitHub Actions pipeline
 
-1. Install dependencies
-2. Validate metadata against schema
-3. Generate final bundle artifact
-4. Generate version.json
-5. Publish dist directory to GitHub Pages
-6. Store release metadata for downstream consumption
+1. Trigger on push to main
+2. Trigger on metadata changes
+3. Trigger monthly on the first of the month at 00:00 UTC
+4. Trigger manual workflow dispatch
+5. Validate provider JSON files against the schema
+6. Fetch external metadata for pricing, cancellation, and logo validation as allowed
+7. Compute intelligence fields and normalize merged provider data
+8. Generate final dist/providers.json
+9. Generate version.json
+10. Publish dist directory to GitHub Pages
+11. Open a PR with the metadata diff for manual review before merge
 
 ### Output contract
 
-- dist/metadata.bundle.json
+- dist/providers.json
 - dist/version.json
+
+This aligns with the app release pattern of shipping a baseline bundle and fetching the latest metadata on app launch when online.
 
 ## Starter implementation phases
 
 ### Phase 1: Contract and schema
 
-- Define core interfaces and JSON schema
-- Confirm required fields and enums
-- Add baseline category and subscription examples
+- Define provider-level JSON schema and validation rules
+- Confirm required fields, enums, allowed values, and URL requirements
+- Add baseline provider examples such as Netflix and similar category entries
 
 ### Phase 2: Validation and local build
 
 - Add TypeScript build scripts
-- Add validation command for local checks
+- Add validation commands for provider JSON files
+- Enforce required checks:
+  - required fields
+  - valid URLs
+  - unique plan ids
+  - category recognition
+  - valid regions
+  - allowed logo sources
+  - seasonal pattern validation
+  - friction rating range 1–5
 - Add CI validation step
 
-### Phase 3: Bundle generation
+### Phase 3: External enrichment and intelligence computation
 
-- Build a single metadata bundle
-- Emit version manifest
-- Validate the final output shape
+- Fetch pricing page data safely and deterministically
+- Validate cancellation and help-center URLs
+- Validate logo sources and fetch App Store/CDN metadata when required
+- Compute seasonal pattern, cancellation difficulty, price trend, value drift signals, and benchmark anchor
 
-### Phase 4: Publishing
+### Phase 4: Bundle generation
 
-- Add GitHub Actions workflow
-- Publish to GitHub Pages
-- Confirm generated output is accessible and stable
+- Merge provider files into a single dist/providers.json artifact
+- Emit version.json with bundleVersion and schemaVersion
+- Run final quality checks before publish
 
-### Phase 5: Documentation and maintainability
+### Phase 5: Publishing and review
+
+- Add GitHub Actions workflow for monthly, on-demand, and push-triggered runs
+- Publish dist to GitHub Pages
+- Open a PR with diffs for review and manual approval before merge
+
+### Phase 6: Documentation and maintainability
 
 - Document schema rules
-- Document bundle contract
+- Document provider file structure
 - Document versioning expectations
-- Add contributor guidance for safe metadata updates
+- Add contributor guidance for metadata updates and review workflow
 
 ## Verification checklist
 
-- Validate bundle against schema locally
-- Generate dist/metadata.bundle.json successfully
+- Validate provider JSON files against schema locally
+- Generate dist/providers.json successfully
 - Generate dist/version.json successfully
 - Confirm GitHub Pages publish works end-to-end
 - Confirm version metadata is readable by the private app
 - Confirm no app logic is present in this repo
+- Confirm workflow fails when critical metadata checks are invalid
+- Confirm monthly and manual triggers behave as expected
 
 ## Current working plan
 
 This repo will serve as the public metadata source of truth for SubSage and should remain intentionally narrow in scope. The next implementation steps are to:
 
-1. define the schema and type model,
-2. create sample metadata entries,
+1. define the provider schema and type model,
+2. create sample provider metadata files,
 3. set up TypeScript validation and build scripts,
-4. generate the single bundle,
-5. publish to GitHub Pages, and
+4. generate the single dist/providers.json bundle,
+5. add the monthly and on-demand GitHub Actions automation, and
 6. document the versioning and release contract.
 
 ## Notes for future edits
