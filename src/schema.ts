@@ -1,44 +1,10 @@
-export const providerSchema = {
+const supportedRegionEnum = ['US', 'CA', 'UK', 'EU', 'AU', 'GLOBAL'] as const;
+
+const providerMetaSchema = {
   type: 'object',
-  required: [
-    'version',
-    'provider_id',
-    'name',
-    'category',
-    'regions',
-    'supported',
-    'logo',
-    'plans',
-    'urls',
-    'intelligence',
-    'recommendations'
-  ],
+  required: ['logo', 'plans', 'urls', 'intelligence', 'recommendations'],
   additionalProperties: false,
   properties: {
-    version: { type: 'string', minLength: 1 },
-    provider_id: { type: 'string', minLength: 1 },
-    name: { type: 'string', minLength: 1 },
-    category: {
-      type: 'string',
-      enum: [
-        'streaming',
-        'music_audio',
-        'productivity',
-        'fitness_wellness',
-        'learning',
-        'gaming',
-        'news_reading',
-        'utilities_tools',
-        'lifestyle',
-        'shopping_memberships'
-      ]
-    },
-    regions: {
-      type: 'array',
-      items: { type: 'string', enum: ['US', 'CA', 'UK', 'EU', 'AU', 'GLOBAL'] },
-      minItems: 1
-    },
-    supported: { type: 'boolean' },
     logo: {
       type: 'object',
       required: ['source'],
@@ -131,6 +97,66 @@ export const providerSchema = {
               reason: { type: 'string', minLength: 1 }
             }
           }
+        }
+      }
+    }
+  }
+} as const;
+
+export const providerSchema = {
+  type: 'object',
+  required: [
+    'version',
+    'provider_id',
+    'name',
+    'category',
+    'default_region',
+    'regions',
+    'supported',
+    'default',
+    'regional_overrides'
+  ],
+  additionalProperties: false,
+  properties: {
+    version: { type: 'string', minLength: 1 },
+    provider_id: { type: 'string', minLength: 1 },
+    name: { type: 'string', minLength: 1 },
+    category: {
+      type: 'string',
+      enum: [
+        'streaming',
+        'music_audio',
+        'productivity',
+        'fitness_wellness',
+        'learning',
+        'gaming',
+        'news_reading',
+        'utilities_tools',
+        'lifestyle',
+        'shopping_memberships'
+      ]
+    },
+    default_region: { type: 'string', enum: supportedRegionEnum },
+    regions: {
+      type: 'array',
+      items: { type: 'string', enum: supportedRegionEnum },
+      minItems: 1,
+      uniqueItems: true
+    },
+    supported: { type: 'boolean' },
+    default: providerMetaSchema,
+    regional_overrides: {
+      type: 'object',
+      propertyNames: { type: 'string', enum: supportedRegionEnum },
+      additionalProperties: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          logo: { type: 'object' },
+          plans: { type: 'array' },
+          urls: { type: 'object' },
+          intelligence: { type: 'object' },
+          recommendations: { type: 'object' }
         }
       }
     }

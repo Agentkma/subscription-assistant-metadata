@@ -65,16 +65,24 @@ export interface ProviderRecommendations {
   upgrade_paths: UpgradePath[];
 }
 
-export interface ProviderRecord {
-  version: string;
-  provider_id: string;
-  name: string;
-  category: string;
-  regions: SupportedRegion[];
-  supported: boolean;
+export interface ProviderDefault {
   logo: ProviderLogo;
   plans: ProviderPlan[];
   urls: ProviderUrls;
   intelligence: Intelligence;
   recommendations: ProviderRecommendations;
+}
+
+export interface ProviderOverride extends Partial<ProviderDefault> {}
+
+export interface ProviderRecord {
+  version: string;
+  provider_id: string;
+  name: string;
+  category: string;
+  default_region: SupportedRegion;
+  regions: SupportedRegion[];
+  supported: boolean;
+  default: ProviderDefault;
+  regional_overrides: Partial<Record<SupportedRegion, ProviderOverride>>;
 }

@@ -3,57 +3,63 @@
   "provider_id": "google_workspace",
   "name": "Google Workspace",
   "category": "productivity",
+  "default_region": "US",
   "regions": [
     "US"
   ],
   "supported": true,
-  "logo": {
-    "source": "fallback",
-    "app_store_id": null,
-    "play_store_package": null,
-    "cdn_url": null,
-    "fallback_icon": "google_workspace"
-  },
-  "plans": [
-    {
-      "plan_id": "individual",
-      "name": "Individual",
-      "billing_cycle": "monthly",
-      "base_price_usd": 10.99,
-      "price_last_updated": "2026-09-12"
+  "default": {
+    "logo": {
+      "source": "fallback",
+      "app_store_id": null,
+      "play_store_package": null,
+      "cdn_url": null,
+      "fallback_icon": "google_workspace"
     },
-    {
-      "plan_id": "family",
-      "name": "Family",
-      "billing_cycle": "monthly",
-      "base_price_usd": 24.18,
-      "price_last_updated": "2026-09-12"
-    }
-  ],
-  "urls": {
-    "pricing": "https://example.com/google_workspace",
-    "cancellation": "https://example.com/google_workspace/cancel",
-    "help_center": "https://help.example.com/google_workspace"
-  },
-  "intelligence": {
-    "seasonal_pattern": "holiday_season",
-    "value_drift_signals": [
-      "price_increase",
-      "feature_packaging"
+    "plans": [
+      {
+        "plan_id": "individual",
+        "name": "Individual",
+        "billing_cycle": "monthly",
+        "base_price_usd": 10.99,
+        "price_last_updated": "2026-09-12"
+      },
+      {
+        "plan_id": "family",
+        "name": "Family",
+        "billing_cycle": "monthly",
+        "base_price_usd": 24.18,
+        "price_last_updated": "2026-09-12"
+      }
     ],
-    "cancellation_difficulty": 2,
-    "benchmark_anchor": {
-      "category_rank": 1,
-      "value_score_baseline": 0.8
+    "urls": {
+      "pricing": "https://example.com/google_workspace",
+      "cancellation": "https://example.com/google_workspace/cancel",
+      "help_center": "https://help.example.com/google_workspace"
     },
-    "price_trend": {
-      "trend": "flat",
-      "last_increase": "2026-01-01",
-      "increase_percent": 0.0
+    "intelligence": {
+      "seasonal_pattern": "holiday_season",
+      "value_drift_signals": [
+        "price_increase",
+        "feature_packaging"
+      ],
+      "cancellation_difficulty": 2,
+      "benchmark_anchor": {
+        "category_rank": 1,
+        "value_score_baseline": 0.8
+      },
+      "price_trend": {
+        "trend": "flat",
+        "last_increase": "2026-01-01",
+        "increase_percent": 0
+      }
+    },
+    "recommendations": {
+      "alternatives": [],
+      "upgrade_paths": []
     }
   },
-  "recommendations": {
-    "alternatives": [],
-    "upgrade_paths": []
+  "regional_overrides": {
+    "US": {}
   }
 }

@@ -15,6 +15,18 @@ test('validates the provider directory without errors', async () => {
   assert.equal(results.some((result) => result.valid === false), false);
 });
 
+test('validates the US-only default-plus-region schema', async () => {
+  const raw = await fs.readFile('metadata/providers/streaming/netflix.json', 'utf8');
+  const provider = JSON.parse(raw);
+
+  assert.equal(provider.default_region, 'US');
+  assert.deepEqual(provider.regions, ['US']);
+  assert.equal(typeof provider.default, 'object');
+  assert.equal(Array.isArray(provider.default.plans), true);
+  assert.equal(typeof provider.regional_overrides, 'object');
+  assert.deepEqual(Object.keys(provider.regional_overrides), ['US']);
+});
+
 test('contains the canonical MVP category catalog', async () => {
   const raw = await fs.readFile('metadata/categories.json', 'utf8');
   const categories = JSON.parse(raw);

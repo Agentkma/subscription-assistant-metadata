@@ -44,13 +44,29 @@ export async function validateProviderFile(filePath: string): Promise<ProviderVa
   }
 }
 
+async function listJsonFiles(dirPath: string): Promise<string[]> {
+  const entries = await fs.readdir(dirPath, { withFileTypes: true });
+  const files: string[] = [];
+
+  for (const entry of entries) {
+    const fullPath = path.join(dirPath, entry.name);
+
+    if (entry.isDirectory()) {
+      files.push(...(await listJsonFiles(fullPath)));
+      continue;
+    }
+
+    if (entry.isFile() && entry.name.endsWith('.json')) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+}
+
 export async function validateProvidersDirectory(dirPath: string): Promise<ProviderValidationResult[]> {
   const resolvedDir = path.resolve(dirPath);
-  const entries = await fs.readdir(resolvedDir, { withFileTypes: true });
-  const jsonFiles = entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
-    .map((entry) => path.join(resolvedDir, entry.name));
-
+  const jsonFiles = await listJsonFiles(resolvedDir);
   const results = await Promise.all(jsonFiles.map((file) => validateProviderFile(file)));
   return results;
 }

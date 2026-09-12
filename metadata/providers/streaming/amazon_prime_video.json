@@ -3,55 +3,63 @@
   "provider_id": "amazon_prime_video",
   "name": "Amazon Prime Video",
   "category": "streaming",
+  "default_region": "US",
   "regions": [
-    "US",
-    "CA",
-    "UK",
-    "EU",
-    "AU",
-    "GLOBAL"
+    "US"
   ],
   "supported": true,
-  "logo": {
-    "source": "fallback",
-    "app_store_id": null,
-    "play_store_package": null,
-    "cdn_url": null,
-    "fallback_icon": "amazon_prime_video"
-  },
-  "plans": [
-    {
-      "plan_id": "standard",
-      "name": "Standard",
-      "billing_cycle": "monthly",
-      "base_price_usd": 15.49,
-      "price_last_updated": "2026-09-12"
-    }
-  ],
-  "urls": {
-    "pricing": "https://example.com/amazon_prime_video",
-    "cancellation": "https://example.com/amazon_prime_video/cancel",
-    "help_center": "https://help.example.com/amazon_prime_video"
-  },
-  "intelligence": {
-    "seasonal_pattern": "holiday_season",
-    "value_drift_signals": [
-      "price_increase",
-      "feature_packaging"
-    ],
-    "cancellation_difficulty": 2,
-    "benchmark_anchor": {
-      "category_rank": 1,
-      "value_score_baseline": 0.8
+  "default": {
+    "logo": {
+      "source": "fallback",
+      "app_store_id": null,
+      "play_store_package": null,
+      "cdn_url": null,
+      "fallback_icon": "amazon_prime_video"
     },
-    "price_trend": {
-      "trend": "flat",
-      "last_increase": "2026-01-01",
-      "increase_percent": 0.0
+    "plans": [
+      {
+        "plan_id": "prime_bundle_monthly",
+        "name": "Amazon Prime (Monthly)",
+        "billing_cycle": "monthly",
+        "base_price_usd": 9.99,
+        "price_last_updated": "2026-09-12"
+      },
+      {
+        "plan_id": "prime_bundle_yearly",
+        "name": "Amazon Prime (Yearly)",
+        "billing_cycle": "yearly",
+        "base_price_usd": 99,
+        "price_last_updated": "2026-09-12"
+      }
+    ],
+    "urls": {
+      "pricing": "https://www.amazon.us/prime",
+      "cancellation": "https://www.amazon.com/gp/help/customer/display.html?nodeId=GZLQX3F4FJQ2K2K4",
+      "help_center": "https://www.primevideo.com/help"
+    },
+    "intelligence": {
+      "seasonal_pattern": "holiday_season",
+      "value_drift_signals": [
+        "price_increase",
+        "feature_packaging"
+      ],
+      "cancellation_difficulty": 2,
+      "benchmark_anchor": {
+        "category_rank": 1,
+        "value_score_baseline": 0.8
+      },
+      "price_trend": {
+        "trend": "flat",
+        "last_increase": "2026-01-01",
+        "increase_percent": 0
+      }
+    },
+    "recommendations": {
+      "alternatives": [],
+      "upgrade_paths": []
     }
   },
-  "recommendations": {
-    "alternatives": [],
-    "upgrade_paths": []
+  "regional_overrides": {
+    "US": {}
   }
 }

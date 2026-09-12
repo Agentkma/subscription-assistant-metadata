@@ -3,50 +3,56 @@
   "provider_id": "youtube_music",
   "name": "YouTube Music",
   "category": "music_audio",
+  "default_region": "US",
   "regions": [
     "US"
   ],
   "supported": true,
-  "logo": {
-    "source": "fallback",
-    "app_store_id": null,
-    "play_store_package": null,
-    "cdn_url": null,
-    "fallback_icon": "youtube_music"
-  },
-  "plans": [
-    {
-      "plan_id": "standard",
-      "name": "Standard",
-      "billing_cycle": "monthly",
-      "base_price_usd": 9.99,
-      "price_last_updated": "2026-09-12"
-    }
-  ],
-  "urls": {
-    "pricing": "https://example.com/youtube_music",
-    "cancellation": "https://example.com/youtube_music/cancel",
-    "help_center": "https://help.example.com/youtube_music"
-  },
-  "intelligence": {
-    "seasonal_pattern": "holiday_season",
-    "value_drift_signals": [
-      "price_increase",
-      "feature_packaging"
-    ],
-    "cancellation_difficulty": 2,
-    "benchmark_anchor": {
-      "category_rank": 1,
-      "value_score_baseline": 0.8
+  "default": {
+    "logo": {
+      "source": "fallback",
+      "app_store_id": null,
+      "play_store_package": null,
+      "cdn_url": null,
+      "fallback_icon": "youtube_music"
     },
-    "price_trend": {
-      "trend": "flat",
-      "last_increase": "2026-01-01",
-      "increase_percent": 0.0
+    "plans": [
+      {
+        "plan_id": "standard",
+        "name": "Standard",
+        "billing_cycle": "monthly",
+        "base_price_usd": 9.99,
+        "price_last_updated": "2026-09-12"
+      }
+    ],
+    "urls": {
+      "pricing": "https://example.com/youtube_music",
+      "cancellation": "https://example.com/youtube_music/cancel",
+      "help_center": "https://help.example.com/youtube_music"
+    },
+    "intelligence": {
+      "seasonal_pattern": "holiday_season",
+      "value_drift_signals": [
+        "price_increase",
+        "feature_packaging"
+      ],
+      "cancellation_difficulty": 2,
+      "benchmark_anchor": {
+        "category_rank": 1,
+        "value_score_baseline": 0.8
+      },
+      "price_trend": {
+        "trend": "flat",
+        "last_increase": "2026-01-01",
+        "increase_percent": 0
+      }
+    },
+    "recommendations": {
+      "alternatives": [],
+      "upgrade_paths": []
     }
   },
-  "recommendations": {
-    "alternatives": [],
-    "upgrade_paths": []
+  "regional_overrides": {
+    "US": {}
   }
 }
