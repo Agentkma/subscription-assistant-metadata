@@ -1,0 +1,59 @@
+{
+  "version": "2026-08-01",
+  "provider_id": "netflix",
+  "name": "Netflix",
+  "category": "Streaming",
+  "regions": ["US"],
+  "supported": true,
+  "logo": {
+    "source": "app_store",
+    "app_store_id": "363590051",
+    "play_store_package": "com.netflix.mediaclient",
+    "cdn_url": null,
+    "fallback_icon": "streaming_generic"
+  },
+  "plans": [
+    {
+      "plan_id": "netflix_standard",
+      "name": "Standard",
+      "billing_cycle": "monthly",
+      "base_price_usd": 15.49,
+      "price_last_updated": "2024-08-01"
+    },
+    {
+      "plan_id": "netflix_premium",
+      "name": "Premium",
+      "billing_cycle": "monthly",
+      "base_price_usd": 22.99,
+      "price_last_updated": "2024-08-01"
+    }
+  ],
+  "urls": {
+    "pricing": "https://www.netflix.com/signup/planform",
+    "cancellation": "https://www.netflix.com/cancelplan",
+    "help_center": "https://help.netflix.com"
+  },
+  "intelligence": {
+    "seasonal_pattern": "winter_release_spike",
+    "value_drift_signals": ["price_increase", "content_rotation"],
+    "cancellation_difficulty": 2,
+    "benchmark_anchor": {
+      "category_rank": 1,
+      "value_score_baseline": 0.82
+    },
+    "price_trend": {
+      "trend": "upward",
+      "last_increase": "2023-10-01",
+      "increase_percent": 12.5
+    }
+  },
+  "recommendations": {
+    "alternatives": ["hulu", "max", "disney_plus"],
+    "upgrade_paths": [
+      {
+        "target_plan_id": "netflix_premium",
+        "reason": "higher resolution and more screens"
+      }
+    ]
+  }
+}

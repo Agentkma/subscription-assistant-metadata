@@ -7,6 +7,7 @@ A public metadata repository for SubSage that publishes a single, versioned meta
 This repo exists to hold the canonical metadata used by the SubSage subscription intelligence app. It is intentionally limited to public metadata, schema validation, and publishing logic.
 
 It does not contain:
+
 - app UI code
 - score calculation logic
 - insight generation logic
@@ -16,6 +17,7 @@ It does not contain:
 ## Scope
 
 This repository is the public data source for SubSage. It defines:
+
 - metadata schema and data contract
 - subscription and category records
 - pricing, friction, and seasonal metadata
@@ -41,6 +43,7 @@ This repository is the public data source for SubSage. It defines:
 ## Metadata model
 
 The bundle is built around subscription data and category metadata, including:
+
 - subscription identity and description
 - category mapping
 - pricing details
@@ -52,10 +55,24 @@ The bundle is built around subscription data and category metadata, including:
 ## Publishing model
 
 The project publishes a single bundled JSON artifact and a separate version manifest, for example:
+
 - dist/metadata.bundle.json
 - dist/version.json
 
 These files are served through GitHub Pages and consumed by the private app repository.
+
+## Schema and validation
+
+This repo uses a JSON Schema contract to define the required shape of each provider record. The schema is not application logic; it is a validation definition that enforces structure such as required fields, allowed enum values, nested object shapes, and versioned metadata rules.
+
+For example, the schema defines things like:
+
+- required provider identity fields such as version, provider_id, and name
+- allowed region and billing cycle values
+- required nested pricing, logo, and recommendation objects
+- validation for provider metadata before it is bundled and published
+
+The validation is implemented in TypeScript and runs in CI/local checks before publication. This keeps the public bundle consistent and prevents invalid metadata from being published.
 
 ## Versioning strategy
 

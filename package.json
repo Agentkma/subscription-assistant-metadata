@@ -1,0 +1,19 @@
+{
+  "name": "subscription-assistant-metadata",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate": "tsx src/validateProviders.ts",
+    "test": "tsx --test"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "ajv": "^8.17.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "ajv-formats": "^3.0.1"
+  }
+}
