@@ -4,10 +4,9 @@
   "name": "Apple TV+",
   "category": "streaming",
   "default_region": "US",
-  "regions": [
-    "US"
-  ],
+  "regions": ["US"],
   "supported": true,
+
   "default": {
     "logo": {
       "source": "fallback",
@@ -16,42 +15,46 @@
       "cdn_url": null,
       "fallback_icon": "apple_tvplus"
     },
+
     "plans": [
       {
-        "plan_id": "standard",
-        "name": "Standard",
+        "plan_id": "apple_tvplus_monthly",
+        "name": "Apple TV+ Monthly",
         "billing_cycle": "monthly",
-        "base_price_usd": 15.49,
-        "price_last_updated": "2026-09-12"
+        "base_price_usd": 9.99,
+        "price_last_updated": "2026-09-12",
+        "notes": "Single plan; no tiers or annual option."
       }
     ],
+
     "urls": {
-      "pricing": "https://example.com/apple_tvplus",
-      "cancellation": "https://example.com/apple_tvplus/cancel",
-      "help_center": "https://help.example.com/apple_tvplus"
+      "official": "https://tv.apple.com",
+      "pricing": "https://www.apple.com/apple-tv-plus/",
+      "cancellation": "https://support.apple.com/en-us/HT212207",
+      "help_center": "https://support.apple.com/tv"
     },
+
     "intelligence": {
-      "seasonal_pattern": "holiday_season",
-      "value_drift_signals": [
-        "price_increase",
-        "feature_packaging"
-      ],
-      "cancellation_difficulty": 2,
+      "seasonal_pattern": "none",
+      "value_drift_signals": ["price_increase"],
+      "cancellation_difficulty": 1,
       "benchmark_anchor": {
-        "category_rank": 1,
-        "value_score_baseline": 0.8
+        "category_rank": 3,
+        "value_score_baseline": 0.75
       },
       "price_trend": {
         "trend": "flat",
-        "last_increase": "2026-01-01",
-        "increase_percent": 0
+        "last_increase": "2023-10-25",
+        "increase_percent": 12.0
       }
     },
+
     "recommendations": {
-      "alternatives": [],
+      "alternatives": ["netflix", "disney_plus", "amazon_prime_video"],
       "upgrade_paths": []
     }
   },
+
   "regional_overrides": {
     "US": {}
   }
