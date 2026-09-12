@@ -4,7 +4,14 @@ A public metadata repository for SubSage that publishes a single, versioned meta
 
 ## Purpose
 
-This repo exists to hold the canonical metadata used by the SubSage subscription intelligence app. It is intentionally limited to public metadata, schema validation, and publishing logic.
+This repository is the public metadata source for SubSage. It holds the canonical provider data, schema contract, and publishing pipeline used by the private app, without containing the app itself.
+
+This repo is intentionally limited to:
+
+- metadata schema and validation
+- provider records and public pricing metadata
+- bundle generation and versioning
+- GitHub Pages publishing
 
 It does not contain:
 
@@ -12,47 +19,25 @@ It does not contain:
 - score calculation logic
 - insight generation logic
 - user input mapping
-- private app business rules
-
-## Scope
-
-This repository is the public data source for SubSage. It defines:
-
-- metadata schema and data contract
-- subscription and category records
-- pricing, friction, and seasonal metadata
-- alternatives and trigger metadata
-- bundle generation and versioning
-- GitHub Pages publishing flow
-
-## What this repo provides
-
-- a single published metadata bundle
-- schema validation for metadata integrity
-- version metadata for safe downstream caching
-- a clean contract for the private SubSage app to consume
-
-## What this repo does not provide
-
-- value score evaluation
-- insight engine logic
-- qualitative-to-numeric scoring rules
-- app-specific UI or state management
-- private app implementation details
+- private application business rules
 
 ## Metadata model
 
-The bundle is built around subscription data and category metadata, including:
+The bundle is built around provider metadata for subscription services, including:
 
-- subscription identity and description
-- category mapping
-- pricing details
-- friction indicators
-- seasonal patterns
-- alternative comparisons
-- insight trigger thresholds
+- provider identity and category mapping
+- pricing and billing metadata
+- regional support and plan details
+- cancellation and value signals
+- seasonal and recommendation metadata
 
-## Publishing model
+## Schema and validation
+
+The repository uses a JSON Schema contract to define the required shape of each provider record. This is a data contract, not app logic: it enforces required fields, allowed enum values, nested object shapes, and compatibility constraints before metadata is published.
+
+The validation is implemented in TypeScript and runs locally and in CI before publication, which keeps the public bundle consistent and safe for downstream consumers.
+
+## Publishing and versioning
 
 The project publishes a single bundled JSON artifact and a separate version manifest, for example:
 
@@ -60,21 +45,6 @@ The project publishes a single bundled JSON artifact and a separate version mani
 - dist/version.json
 
 These files are served through GitHub Pages and consumed by the private app repository.
-
-## Schema and validation
-
-This repo uses a JSON Schema contract to define the required shape of each provider record. The schema is not application logic; it is a validation definition that enforces structure such as required fields, allowed enum values, nested object shapes, and versioned metadata rules.
-
-For example, the schema defines things like:
-
-- required provider identity fields such as version, provider_id, and name
-- allowed region and billing cycle values
-- required nested pricing, logo, and recommendation objects
-- validation for provider metadata before it is bundled and published
-
-The validation is implemented in TypeScript and runs in CI/local checks before publication. This keeps the public bundle consistent and prevents invalid metadata from being published.
-
-## Versioning strategy
 
 The repo uses a dual-version model:
 
@@ -108,19 +78,6 @@ README.md
 package.json
 tsconfig.json
 ```
-
-## Planned implementation phases
-
-1. Define the metadata schema and contract
-2. Add TypeScript validation and build tooling
-3. Create sample metadata entries
-4. Generate the single bundle and version manifest
-5. Publish to GitHub Pages via GitHub Actions
-6. Document release and compatibility expectations
-
-## Current status
-
-This repo is in the planning and scaffolding phase. The goal is to establish a clean, public metadata contract and publishing pipeline before the private app repo consumes it.
 
 ## Notes
 
