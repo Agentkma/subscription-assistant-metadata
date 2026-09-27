@@ -42,7 +42,9 @@ const providerMetaSchema = {
               verified_at: { type: 'string', minLength: 1 },
               method: { type: 'string', enum: ['manual', 'automated'] },
               evidence: { type: ['string', 'null'], minLength: 1 }
-            }
+            },
+            if: { properties: { method: { const: 'automated' } }, required: ['method'] },
+            then: { required: ['evidence'], properties: { evidence: { type: 'string', minLength: 1 } } }
           },
           urls: {
             type: 'object',

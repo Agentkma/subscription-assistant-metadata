@@ -1,6 +1,8 @@
 import fs from 'node:fs/promises';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { Ajv } from 'ajv';
+import { providerSchema } from '../src/schema.js';
 import { validateProviderFile, validateProvidersDirectory } from '../src/validateProviders.js';
 // NodeNext + ESM requires the .js extension in the import specifier.
 
@@ -25,6 +27,24 @@ test('validates the US-only default-plus-region schema', async () => {
   assert.equal(Array.isArray(provider.default.plans), true);
   assert.equal(typeof provider.regional_overrides, 'object');
   assert.deepEqual(Object.keys(provider.regional_overrides), ['US']);
+});
+
+test('requires evidence when plan source method is automated', async () => {
+  const ajv = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true });
+  const validate = ajv.compile(providerSchema);
+  const raw = await fs.readFile('metadata/providers/streaming/amazon_prime_video.json', 'utf8');
+  const provider = JSON.parse(raw);
+  const source = provider.default.plans[0].source;
+
+  source.method = 'automated';
+  source.evidence = null;
+  assert.equal(validate(provider), false);
+
+  delete source.evidence;
+  assert.equal(validate(provider), false);
+
+  source.evidence = 'Prime membership $14.99/month';
+  assert.equal(validate(provider), true);
 });
 
 test('contains the canonical MVP category catalog', async () => {

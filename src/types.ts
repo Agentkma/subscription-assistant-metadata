@@ -26,12 +26,13 @@ export type UrlVisibility = 'public' | 'account_required' | 'unknown';
 
 export type SourceMethod = 'manual' | 'automated';
 
-export interface PlanSource {
+export type PlanSource = {
   url?: string | null;
   verified_at: string;
-  method: SourceMethod;
-  evidence?: string | null;
-}
+} & (
+  | { method: 'manual'; evidence?: string | null }
+  | { method: 'automated'; evidence: string }
+);
 
 export interface ProviderPlan {
   plan_id: string;
