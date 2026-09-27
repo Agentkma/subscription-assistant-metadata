@@ -286,11 +286,14 @@ This aligns with the app release pattern of shipping a baseline bundle and fetch
 
 The dataset is kept current by a GitHub Actions pipeline that combines deterministic scripts with a constrained LLM API call. The LLM only extracts; scripts validate; a human approves every change via PR.
 
+URLs are always human-verified. The LLM never discovers or proposes URLs; it only reads pages at URLs a human has already confirmed.
+
 ### Field ownership
 
 | Field type | Fields | Update method |
 | --- | --- | --- |
 | Deterministic | `urls.*` liveness, `logo` (App Store lookup), schema validity, staleness of `source.verified_at` | Script |
+| Human-verified | `urls.*` values (official, pricing, cancellation, help center), `source.url` | Manual, for every provider |
 | Extracted facts | `plans[]` names, prices, billing cycles, `url_visibility` | LLM API extraction from fetched pages, with evidence |
 | Derived | `intelligence.price_trend` | Computed from price history, not researched |
 | Editorial | `intelligence.*` (except `price_trend`), `recommendations` | LLM-drafted against a written rubric, human-approved, quarterly |
@@ -310,6 +313,7 @@ The dataset is kept current by a GitHub Actions pipeline that combines determini
 ### Guardrails
 
 - Fetched page content is untrusted input (prompt injection risk). The LLM step has no write access or secrets beyond its API key and returns JSON only.
+- The LLM never outputs URLs into provider files; any URL change is a human edit.
 - Schema validation and PR review are the enforcement layer, not the model.
 - Providers that block automated fetches or have no public pricing page are marked manual-only.
 - Check provider terms of service before automated fetching; prefer official help articles or APIs.
@@ -326,10 +330,12 @@ The dataset is kept current by a GitHub Actions pipeline that combines determini
 
 ### Rollout order
 
-1. Finish manual source intake and populate `source` on every plan.
-2. Weekly script-only job: URL liveness, staleness report, page-change detection → opens issue/PR.
-3. Add LLM extraction step for providers with changed pages → PR with evidence.
-4. Quarterly LLM-drafted editorial review against the rubric.
+1. Seed providers: fully verify 2–3 providers by hand that cover different cases (Netflix: static multi-tier; Prime Video: bundle + account-gated add-on; one JS-heavy monthly/yearly page such as Spotify or Disney+). These become the extractor's ground truth.
+2. Local pipeline: fetch → LLM extract → schema/sanity checks → diff against seed files. Tune prompt and rules until seed providers match.
+3. URL intake for remaining providers: human verifies and records `urls.*` and `source.url` for each provider (quick pass, no pricing research).
+4. Automated first pass, one category per PR: pipeline extracts plans/prices from the human-verified URLs with `method: automated` and evidence. Human reviews, corrects, merges. Providers the pipeline can't handle are marked `manual-only`.
+5. Scheduled GitHub Actions job: URL liveness, staleness, page-change detection, and re-extraction on change → PR.
+6. Quarterly LLM-drafted editorial review against the rubric.
 
 ## Starter implementation phases
 
@@ -357,8 +363,8 @@ The dataset is kept current by a GitHub Actions pipeline that combines determini
 ### Phase 3: External enrichment and intelligence computation
 
 - Follows the rollout order in "Automated update strategy"
-- Script-only checks first: URL liveness, staleness, page-change detection
-- Then LLM API extraction for changed pricing pages, with evidence and PR review
+- Seed providers verified by hand first; extraction pipeline tested against them
+- Humans verify all URLs; LLM API extraction drafts plans/prices from those URLs, with evidence and PR review
 - Compute price trend from price history; draft editorial fields against the rubric
 
 ### Phase 4: Bundle generation
@@ -398,10 +404,11 @@ This repo will serve as the public metadata source of truth for SubSage and shou
 1. define the provider schema and type model,
 2. create sample provider metadata files,
 3. set up TypeScript validation and build scripts,
-4. complete manual source intake with a `source` block on every plan,
-5. generate the single dist/providers.json bundle,
-6. add GitHub Actions automation following the rollout order in "Automated update strategy", and
-7. document the versioning and release contract.
+4. complete URL intake for all providers and verify 2–3 seed providers end to end,
+5. build and validate the extraction pipeline against the seed providers,
+6. run the automated first pass by category, then enable the scheduled job,
+7. generate the single dist/providers.json bundle, and
+8. document the versioning and release contract.
 
 ## Notes for future edits
 

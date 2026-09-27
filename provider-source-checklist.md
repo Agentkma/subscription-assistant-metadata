@@ -1,6 +1,6 @@
 # Provider Source Data Checklist
 
-This checklist is the working intake document for the current real-source metadata phase. The goal is to gather verified public provider data for each category before any automated fetch or sync logic is added.
+This checklist is the working intake document for provider source data. Humans verify every provider's URLs; plan and price data is fully hand-verified only for the seed providers, and drafted by the extraction pipeline for everyone else (then reviewed via PR).
 
 ## Rules
 
@@ -9,8 +9,9 @@ This checklist is the working intake document for the current real-source metada
 - Record one canonical category per provider.
 - Mark each source as `verified`, `needs-review`, or `not-found`.
 - Do not treat placeholder scaffold files as real source data.
-- Hold off on automation until sources are complete and validated.
-- Record a `source` block on every plan: the URL the price was confirmed on, `verified_at`, and `method: manual`.
+- Every URL (official, pricing, cancellation, help center, `source.url`) is verified by a human. The pipeline never adds or changes URLs.
+- Seed providers (Netflix, Amazon Prime Video, plus one JS-heavy provider) are verified end to end by hand, including plans and prices, with `method: manual`.
+- For all other providers, record URLs only; plans and prices come from the automated first pass with `method: automated` and an evidence quote.
 - For account-gated plans, set `source.url` to null and add an `access_hint`; these stay manual-only.
 - Note whether each provider's pricing page is automation-friendly (static HTML) or manual-only (JS-heavy, bot-blocked, or gated).
 
@@ -35,13 +36,25 @@ This checklist is the working intake document for the current real-source metada
 
 ## Collection workflow
 
+### URL intake (all providers)
+
 1. Pick a category and list the target providers.
-2. Confirm the provider has an official public web presence and pricing page.
-3. Capture the canonical pricing, cancellation, and help links.
-4. Confirm the logo asset and brand usage guidelines if needed.
-5. Validate the links and record any missing fields.
-6. Update the provider JSON file once the data is confirmed, including the plan `source` block.
-7. Re-run the schema validation for the provider and category.
+2. Confirm the provider has an official public web presence.
+3. Open and confirm the canonical official, pricing, cancellation, and help-center links on provider-owned domains.
+4. Confirm the logo source.
+5. Record the URLs in the provider JSON and mark the Automation column.
+6. Re-run the schema validation.
+
+### Seed providers only
+
+7. Record every plan and price from the pricing page with a `source` block (`method: manual`).
+8. These files are the ground truth used to test the extraction pipeline.
+
+### Reviewing automated drafts
+
+- Check each changed price against the evidence quote and source URL.
+- Reject any value without evidence; fix or null it before merging.
+- Mark providers the pipeline gets wrong repeatedly as `manual-only`.
 
 ## Automation column
 
@@ -56,7 +69,7 @@ This checklist is the working intake document for the current real-source metada
 
 ## Priority order
 
-Collect real-source data in this order:
+Seed providers first (Netflix, Amazon Prime Video, one JS-heavy provider), then URL intake in this order:
 
 1. streaming
 2. music_audio
