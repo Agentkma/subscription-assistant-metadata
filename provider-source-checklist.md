@@ -10,6 +10,9 @@ This checklist is the working intake document for the current real-source metada
 - Mark each source as `verified`, `needs-review`, or `not-found`.
 - Do not treat placeholder scaffold files as real source data.
 - Hold off on automation until sources are complete and validated.
+- Record a `source` block on every plan: the URL the price was confirmed on, `verified_at`, and `method: manual`.
+- For account-gated plans, set `source.url` to null and add an `access_hint`; these stay manual-only.
+- Note whether each provider's pricing page is automation-friendly (static HTML) or manual-only (JS-heavy, bot-blocked, or gated).
 
 ## Canonical categories
 
@@ -26,9 +29,9 @@ This checklist is the working intake document for the current real-source metada
 
 ## Intake template
 
-| Provider | Category | Official site | Pricing page | Cancellation page | Help center | Logo source | Status | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Example: Netflix | streaming | https://www.netflix.com | https://help.netflix.com/en/node/24926 | https://help.netflix.com/en/node/407 | https://help.netflix.com | https://assets.nflxext.com/.. | verified | Needs specific plan names and update timing |
+| Provider | Category | Official site | Pricing page | Cancellation page | Help center | Logo source | Verified at | Automation | Status | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Example: Netflix | streaming | https://www.netflix.com | https://help.netflix.com/en/node/24926 | https://help.netflix.com/en/node/407 | https://help.netflix.com | https://assets.nflxext.com/.. | 2026-09-12 | auto-eligible | verified | Needs specific plan names and update timing |
 
 ## Collection workflow
 
@@ -37,8 +40,13 @@ This checklist is the working intake document for the current real-source metada
 3. Capture the canonical pricing, cancellation, and help links.
 4. Confirm the logo asset and brand usage guidelines if needed.
 5. Validate the links and record any missing fields.
-6. Update the provider JSON file once the data is confirmed.
+6. Update the provider JSON file once the data is confirmed, including the plan `source` block.
 7. Re-run the schema validation for the provider and category.
+
+## Automation column
+
+- `auto-eligible`: public, static pricing page; can be monitored by the scheduled pipeline
+- `manual-only`: JS-heavy, bot-blocked, terms-restricted, or account-gated; re-verify by hand when flagged stale
 
 ## Working status legend
 

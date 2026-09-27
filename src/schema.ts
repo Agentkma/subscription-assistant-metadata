@@ -33,6 +33,17 @@ const providerMetaSchema = {
           notes: { type: ['string', 'null'] },
           url_visibility: { type: 'string', enum: ['public', 'account_required', 'unknown'] },
           access_hint: { type: ['string', 'null'], minLength: 1 },
+          source: {
+            type: 'object',
+            required: ['verified_at', 'method'],
+            additionalProperties: false,
+            properties: {
+              url: { type: ['string', 'null'], minLength: 1 },
+              verified_at: { type: 'string', minLength: 1 },
+              method: { type: 'string', enum: ['manual', 'automated'] },
+              evidence: { type: ['string', 'null'], minLength: 1 }
+            }
+          },
           urls: {
             type: 'object',
             additionalProperties: false,
@@ -49,6 +60,7 @@ const providerMetaSchema = {
       type: 'object',
       additionalProperties: false,
       properties: {
+        official: { type: ['string', 'null'], minLength: 1 },
         pricing: { type: ['string', 'null'], minLength: 1 },
         cancellation: { type: ['string', 'null'], minLength: 1 },
         help_center: { type: ['string', 'null'], minLength: 1 }

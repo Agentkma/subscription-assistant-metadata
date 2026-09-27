@@ -116,9 +116,19 @@ These category lists are intentionally coverage-oriented and can include a few o
 - billing_cycle
 - base_price_usd
 - price_last_updated
+- notes (optional)
+- url_visibility (optional): `public` | `account_required` | `unknown`
+- access_hint (optional): user-facing guidance for account-gated plans; never treated as a public source
+- urls (optional): plan-specific pricing/cancellation/help links; null when account-gated
+- source (optional, required before automation is enabled for a provider):
+  - url: page the price was confirmed on (null for account-gated plans)
+  - verified_at: last date a human or the pipeline confirmed the value
+  - method: `manual` | `automated`
+  - evidence: short quoted snippet from the source page (required for `automated`)
 
 ### URLs object
 
+- official (optional, provider-level only)
 - pricing
 - cancellation
 - help_center
@@ -272,6 +282,55 @@ This allows the consuming app to detect both content updates and structural comp
 
 This aligns with the app release pattern of shipping a baseline bundle and fetching the latest metadata on app launch when online.
 
+## Automated update strategy
+
+The dataset is kept current by a GitHub Actions pipeline that combines deterministic scripts with a constrained LLM API call. The LLM only extracts; scripts validate; a human approves every change via PR.
+
+### Field ownership
+
+| Field type | Fields | Update method |
+| --- | --- | --- |
+| Deterministic | `urls.*` liveness, `logo` (App Store lookup), schema validity, staleness of `source.verified_at` | Script |
+| Extracted facts | `plans[]` names, prices, billing cycles, `url_visibility` | LLM API extraction from fetched pages, with evidence |
+| Derived | `intelligence.price_trend` | Computed from price history, not researched |
+| Editorial | `intelligence.*` (except `price_trend`), `recommendations` | LLM-drafted against a written rubric, human-approved, quarterly |
+| Account-gated | plans with `url_visibility: account_required` | Manual only; flagged when stale |
+
+### Pipeline
+
+1. Scheduled/manual trigger.
+2. Script fetches each provider's `source.url` / `urls.pricing` (Playwright when pages are JS-rendered).
+3. Script hashes the relevant page content; unchanged pages only get a last-checked update.
+4. For changed pages, an LLM API call receives the page text plus the plan schema and returns structured JSON with a quoted evidence snippet per value.
+5. Scripts validate the output: AJV schema, currency/billing-cycle checks, flag price changes > ~25%, flag removed plans, reject values missing evidence.
+6. Script runs URL liveness checks and App Store logo lookups.
+7. Pipeline opens a PR with old → new values, evidence, and source URLs. Nothing auto-merges.
+8. On merge: build bundle, publish to GitHub Pages.
+
+### Guardrails
+
+- Fetched page content is untrusted input (prompt injection risk). The LLM step has no write access or secrets beyond its API key and returns JSON only.
+- Schema validation and PR review are the enforcement layer, not the model.
+- Providers that block automated fetches or have no public pricing page are marked manual-only.
+- Check provider terms of service before automated fetching; prefer official help articles or APIs.
+- Confirm extracted prices are USD/US-region, since runner IP location is not guaranteed.
+
+### Price history
+
+- Append-only per-provider history (planned: `metadata/history/<provider_id>.json`) records each merged price change.
+- `price_trend` (`trend`, `last_increase`, `increase_percent`) is computed from this history at build time.
+
+### Editorial rubric
+
+- A written scoring rubric (planned) defines `cancellation_difficulty` 1–5, `value_score_baseline`, `category_rank`, and `seasonal_pattern` so LLM drafts are consistent and reviewable.
+
+### Rollout order
+
+1. Finish manual source intake and populate `source` on every plan.
+2. Weekly script-only job: URL liveness, staleness report, page-change detection → opens issue/PR.
+3. Add LLM extraction step for providers with changed pages → PR with evidence.
+4. Quarterly LLM-drafted editorial review against the rubric.
+
 ## Starter implementation phases
 
 ### Phase 1: Contract and schema
@@ -297,10 +356,10 @@ This aligns with the app release pattern of shipping a baseline bundle and fetch
 
 ### Phase 3: External enrichment and intelligence computation
 
-- Fetch pricing page data safely and deterministically
-- Validate cancellation and help-center URLs
-- Validate logo sources and fetch App Store/CDN metadata when required
-- Compute seasonal pattern, cancellation difficulty, price trend, value drift signals, and benchmark anchor
+- Follows the rollout order in "Automated update strategy"
+- Script-only checks first: URL liveness, staleness, page-change detection
+- Then LLM API extraction for changed pricing pages, with evidence and PR review
+- Compute price trend from price history; draft editorial fields against the rubric
 
 ### Phase 4: Bundle generation
 
@@ -339,9 +398,10 @@ This repo will serve as the public metadata source of truth for SubSage and shou
 1. define the provider schema and type model,
 2. create sample provider metadata files,
 3. set up TypeScript validation and build scripts,
-4. generate the single dist/providers.json bundle,
-5. add the monthly and on-demand GitHub Actions automation, and
-6. document the versioning and release contract.
+4. complete manual source intake with a `source` block on every plan,
+5. generate the single dist/providers.json bundle,
+6. add GitHub Actions automation following the rollout order in "Automated update strategy", and
+7. document the versioning and release contract.
 
 ## Notes for future edits
 

@@ -24,6 +24,15 @@ export interface ProviderLogo {
 
 export type UrlVisibility = 'public' | 'account_required' | 'unknown';
 
+export type SourceMethod = 'manual' | 'automated';
+
+export interface PlanSource {
+  url?: string | null;
+  verified_at: string;
+  method: SourceMethod;
+  evidence?: string | null;
+}
+
 export interface ProviderPlan {
   plan_id: string;
   name: string;
@@ -33,6 +42,7 @@ export interface ProviderPlan {
   notes?: string;
   url_visibility?: UrlVisibility;
   access_hint?: string | null;
+  source?: PlanSource;
   urls?: ProviderUrls;
 }
 
@@ -40,6 +50,10 @@ export interface ProviderUrls {
   pricing?: string | null;
   cancellation?: string | null;
   help_center?: string | null;
+}
+
+export interface ProviderLevelUrls extends ProviderUrls {
+  official?: string | null;
 }
 
 export interface BenchmarkAnchor {
@@ -74,7 +88,7 @@ export interface ProviderRecommendations {
 export interface ProviderDefault {
   logo: ProviderLogo;
   plans: ProviderPlan[];
-  urls: ProviderUrls;
+  urls: ProviderLevelUrls;
   intelligence: Intelligence;
   recommendations: ProviderRecommendations;
 }
