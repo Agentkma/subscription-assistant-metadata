@@ -15,9 +15,7 @@ Build a public metadata repository for SubSage that publishes a single, versione
 
 ## Current implementation focus
 
-The repo is currently in the real-source data intake phase. The immediate priority is to finalize the canonical categories and catalog, then collect source-backed provider data using a checklist before any automation is built.
-
-This phase intentionally excludes fetch/update automation. We are not building ingestion scripts, update jobs, or any automated metadata sync yet. The current work is to confirm the correct catalog, collect official provider source URLs and metadata, and validate the data before moving into the automation stage.
+The repo is in a seed-first intake phase. Keep Netflix, Amazon Prime Video, and Spotify as the only active provider records while their URLs, plans, and prices are manually verified. Track all remaining provider coverage in `provider-source-checklist.md` without scaffold JSON files. After the seeds are verified, build and test the LLM extraction workflow before activating providers in batches.
 
 The active focus is:
 
@@ -29,7 +27,7 @@ The active focus is:
 
 ## Core product context
 
-SubSage is a privacy-first subscription intelligence app. It does not connect to bank accounts or scrape usage data. All intelligence comes from a public metadata bundle hosted on GitHub Pages. The app consumes metadata for pricing, friction, seasonal value patterns, alternatives, and trigger conditions, then combines that with user input to calculate a value score in the private app repository.
+SubSage is a privacy-first subscription app. It does not connect to bank accounts or scrape usage data. The public metadata bundle supplies provider and plan facts, verified sources, optional price trends, and optional insight/recommendation values. The app combines this public data with user input using client-side scoring and presentation logic; anything fetched from GitHub Pages is public.
 
 ## Primary responsibilities of this repo
 
@@ -66,8 +64,8 @@ Each provider record should include:
 - logo
 - plans[]
 - urls
-- intelligence
-- recommendations
+- intelligence (optional until reviewed values exist)
+- recommendations (optional until reviewed values exist)
 
 ### MVP category catalog
 
@@ -116,42 +114,53 @@ These category lists are intentionally coverage-oriented and can include a few o
 - billing_cycle
 - base_price_usd
 - price_last_updated
+- notes (optional)
+- url_visibility (optional): `public` | `account_required` | `unknown`
+- access_hint (optional generally; required and non-empty when `url_visibility` is `account_required`): user-facing guidance, never treated as a public source
+- urls (optional): plan-specific pricing/cancellation/help links; null when account-gated
+- source (optional, required before automation is enabled for a provider):
+  - url: page the price was confirmed on (required and non-empty for automated sources; explicitly null for account-gated plans)
+  - verified_at: last date a human or the pipeline confirmed the value
+  - method: `manual` | `automated`
+  - evidence: short quoted snippet from the source page (required and non-empty for `automated`)
+
+Conditional plan rules:
+
+- `source.method: automated` requires a non-empty `source.url` and `source.evidence`.
+- `url_visibility: account_required` requires a non-empty `access_hint` and `source.method: manual` with `source.url: null`.
 
 ### URLs object
 
+- official (optional, provider-level only)
 - pricing
 - cancellation
 - help_center
 
-### Intelligence object
-
-- seasonal_pattern
-- value_drift_signals[]
-- cancellation_difficulty
-- benchmark_anchor
-- price_trend
-
-### Recommendations object
-
-- alternatives[]
-- upgrade_paths[]
-
-### Benchmark anchor object
-
-- category_rank
-- value_score_baseline
-
-### Price trend object
+### Plan price trend object (optional)
 
 - trend
 - last_increase
 - increase_percent
 
+### Intelligence object (optional)
+
+- seasonal_pattern
+- value_drift_signals[]
+- cancellation_difficulty
+- benchmark_anchor: category_rank, value_score_baseline
+
+### Recommendations object (optional)
+
+- alternatives[]
+- upgrade_paths[]: target_plan_id, reason
+
 ### Notes on schema evolution
 
 - This dataset is intentionally provider-centric rather than app-centric
 - It should support deterministic automation and validation
-- Intelligence fields are computed in the metadata pipeline, not in the app repo
+- Public insight and recommendation values may be included in provider records; they are downloadable public data, not secrets
+- Client-side scoring and presentation logic stays in the app code; anything shipped in the app can be inspected by users
+- Optional plan trends are derived from public price history; omit them until history exists
 - The app repo consumes the final merged result, not the raw provider files directly
 
 ## Recommended architecture
@@ -259,7 +268,7 @@ This allows the consuming app to detect both content updates and structural comp
 4. Trigger manual workflow dispatch
 5. Validate provider JSON files against the schema
 6. Fetch external metadata for pricing, cancellation, and logo validation as allowed
-7. Compute intelligence fields and normalize merged provider data
+7. Compute optional plan-level price trends from public price history
 8. Generate final dist/providers.json
 9. Generate version.json
 10. Publish dist directory to GitHub Pages
@@ -271,6 +280,62 @@ This allows the consuming app to detect both content updates and structural comp
 - dist/version.json
 
 This aligns with the app release pattern of shipping a baseline bundle and fetching the latest metadata on app launch when online.
+
+## Automated update strategy
+
+The dataset is kept current by a GitHub Actions pipeline that combines deterministic scripts with a constrained LLM API call. The LLM only extracts; scripts validate; a human approves every change via PR.
+
+URLs are always human-verified. The LLM never discovers or proposes URLs; it only reads pages at URLs a human has already confirmed.
+
+### Field ownership
+
+| Field type | Fields | Update method |
+| --- | --- | --- |
+| Deterministic | `urls.*` liveness, `logo` (App Store lookup), schema validity, staleness of `source.verified_at` | Script |
+| Human-verified | `urls.*` values (official, pricing, cancellation, help center), `source.url` | Manual, for every provider |
+| Extracted facts | `plans[]` names, prices, billing cycles, `url_visibility` | LLM API extraction from fetched pages, with evidence |
+| Derived public fact | `plans[].price_trend` | Computed from public price history; omitted until history exists |
+| Curated public insights | `intelligence`, `recommendations` | Draft against a written rubric; human-reviewed before publishing; values are public |
+| Account-gated | plans with `url_visibility: account_required` | Manual only; flagged when stale |
+
+### Pipeline
+
+1. Scheduled/manual trigger.
+2. Script fetches each provider's `source.url` / `urls.pricing` (Playwright when pages are JS-rendered).
+3. Script hashes the relevant page content; unchanged pages only get a last-checked update.
+4. For changed pages, an LLM API call receives the page text plus the plan schema and returns structured JSON with a quoted evidence snippet per value.
+5. Scripts validate the output: AJV schema, currency/billing-cycle checks, flag price changes > ~25%, flag removed plans, reject values missing evidence.
+6. Script runs URL liveness checks and App Store logo lookups.
+7. Pipeline opens a PR with old → new values, evidence, and source URLs. Nothing auto-merges.
+8. On merge: build bundle, publish to GitHub Pages.
+
+### Guardrails
+
+- Fetched page content is untrusted input (prompt injection risk). The LLM step has no write access or secrets beyond its API key and returns JSON only.
+- The LLM never outputs URLs into provider files; any URL change is a human edit.
+- Schema validation and PR review are the enforcement layer, not the model.
+- Providers that block automated fetches or have no public pricing page are marked manual-only.
+- Check provider terms of service before automated fetching; prefer official help articles or APIs.
+- Confirm extracted prices are USD/US-region, since runner IP location is not guaranteed.
+
+### Price history
+
+- Append-only per-plan history (planned: `metadata/history/<provider_id>/<plan_id>.json`) records each merged public price change.
+- Optional `plans[].price_trend` (`trend`, `last_increase`, `increase_percent`) is computed from that history; omit it until enough verified history exists.
+
+### Insight rubric
+
+- A written rubric defines `cancellation_difficulty` 1–5, `value_score_baseline`, `category_rank`, and `seasonal_pattern` so public insight values are consistent and reviewable.
+- LLM-drafted insight and recommendation changes require human review in a PR; the client-side scoring implementation remains in the app.
+
+### Rollout order
+
+1. Seed providers: fully verify 2–3 providers by hand that cover different cases (Netflix: static multi-tier; Prime Video: bundle + account-gated add-on; one JS-heavy monthly/yearly page such as Spotify or Disney+). These become the extractor's ground truth.
+2. Local pipeline: fetch → LLM extract → schema/sanity checks → diff against seed files. Tune prompt and rules until seed providers match.
+3. URL intake for remaining providers: human verifies and records `urls.*` and `source.url` for each provider (quick pass, no pricing research).
+4. Automated first pass, one category per PR: pipeline extracts plans/prices from the human-verified URLs with `method: automated` and evidence. Human reviews, corrects, merges. Providers the pipeline can't handle are marked `manual-only`.
+5. Scheduled GitHub Actions job: URL liveness, staleness, page-change detection, and re-extraction on change → PR.
+6. Quarterly LLM-drafted insight/recommendation review against the rubric, with human approval.
 
 ## Starter implementation phases
 
@@ -291,16 +356,15 @@ This aligns with the app release pattern of shipping a baseline bundle and fetch
   - category recognition
   - valid regions
   - allowed logo sources
-  - seasonal pattern validation
-  - friction rating range 1–5
 - Add CI validation step
 
-### Phase 3: External enrichment and intelligence computation
+### Phase 3: External enrichment and public price trend computation
 
-- Fetch pricing page data safely and deterministically
-- Validate cancellation and help-center URLs
-- Validate logo sources and fetch App Store/CDN metadata when required
-- Compute seasonal pattern, cancellation difficulty, price trend, value drift signals, and benchmark anchor
+- Follows the rollout order in "Automated update strategy"
+- Seed providers verified by hand first; extraction pipeline tested against them
+- Humans verify all URLs; LLM API extraction drafts plans/prices from those URLs, with evidence and PR review
+- Compute optional plan-level price trends from verified public price history
+- Draft public insight and recommendation values against the rubric; require human review
 
 ### Phase 4: Bundle generation
 
@@ -336,12 +400,13 @@ This aligns with the app release pattern of shipping a baseline bundle and fetch
 
 This repo will serve as the public metadata source of truth for SubSage and should remain intentionally narrow in scope. The next implementation steps are to:
 
-1. define the provider schema and type model,
-2. create sample provider metadata files,
-3. set up TypeScript validation and build scripts,
-4. generate the single dist/providers.json bundle,
-5. add the monthly and on-demand GitHub Actions automation, and
-6. document the versioning and release contract.
+1. finalize the public factual metadata schema and types,
+2. keep only the three seed provider records active and manually verify them,
+3. build and validate the extraction pipeline against the verified seeds,
+4. record human-verified URLs for remaining providers in the checklist,
+5. add provider records in reviewed category batches and enable scheduled updates,
+6. generate the single dist/providers.json bundle from active, reviewed records, and
+7. document the versioning and release contract.
 
 ## Notes for future edits
 

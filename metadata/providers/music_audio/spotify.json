@@ -29,36 +29,6 @@
       "pricing": "https://example.com/spotify",
       "cancellation": "https://example.com/spotify/cancel",
       "help_center": "https://help.example.com/spotify"
-    },
-    "intelligence": {
-      "seasonal_pattern": "holiday_season",
-      "value_drift_signals": [
-        "price_increase",
-        "feature_packaging"
-      ],
-      "cancellation_difficulty": 2,
-      "benchmark_anchor": {
-        "category_rank": 1,
-        "value_score_baseline": 0.8
-      },
-      "price_trend": {
-        "trend": "flat",
-        "last_increase": "2026-01-01",
-        "increase_percent": 0
-      }
-    },
-    "recommendations": {
-      "alternatives": [
-        "disney_plus",
-        "max",
-        "apple_tv_plus"
-      ],
-      "upgrade_paths": [
-        {
-          "target_plan_id": "standard",
-          "reason": "Higher resolution and additional screens"
-        }
-      ]
     }
   },
   "regional_overrides": {

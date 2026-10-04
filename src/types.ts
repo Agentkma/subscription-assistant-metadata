@@ -24,17 +24,47 @@ export interface ProviderLogo {
 
 export type UrlVisibility = 'public' | 'account_required' | 'unknown';
 
-export interface ProviderPlan {
+export type SourceMethod = 'manual' | 'automated';
+
+export type ManualPlanSource = {
+  url?: string | null;
+  verified_at: string;
+  method: 'manual';
+  evidence?: string | null;
+};
+
+export type AutomatedPlanSource = {
+  url: string;
+  verified_at: string;
+  method: 'automated';
+  evidence: string;
+};
+
+export type PlanSource = ManualPlanSource | AutomatedPlanSource;
+
+interface ProviderPlanBase {
   plan_id: string;
   name: string;
   billing_cycle: BillingCycle;
   base_price_usd: number;
   price_last_updated: string;
   notes?: string;
-  url_visibility?: UrlVisibility;
-  access_hint?: string | null;
+  price_trend?: PriceTrend;
   urls?: ProviderUrls;
 }
+
+export type ProviderPlan = ProviderPlanBase & (
+  | {
+      url_visibility: 'account_required';
+      access_hint: string;
+      source: ManualPlanSource & { url: null };
+    }
+  | {
+      url_visibility?: Exclude<UrlVisibility, 'account_required'>;
+      access_hint?: string | null;
+      source?: PlanSource;
+    }
+);
 
 export interface ProviderUrls {
   pricing?: string | null;
@@ -42,9 +72,8 @@ export interface ProviderUrls {
   help_center?: string | null;
 }
 
-export interface BenchmarkAnchor {
-  category_rank: number;
-  value_score_baseline: number;
+export interface ProviderLevelUrls extends ProviderUrls {
+  official?: string | null;
 }
 
 export interface PriceTrend {
@@ -53,12 +82,16 @@ export interface PriceTrend {
   increase_percent?: number | null;
 }
 
+export interface BenchmarkAnchor {
+  category_rank: number;
+  value_score_baseline: number;
+}
+
 export interface Intelligence {
   seasonal_pattern: SeasonalPattern;
   value_drift_signals: string[];
   cancellation_difficulty: number;
   benchmark_anchor: BenchmarkAnchor;
-  price_trend: PriceTrend;
 }
 
 export interface UpgradePath {
@@ -74,9 +107,9 @@ export interface ProviderRecommendations {
 export interface ProviderDefault {
   logo: ProviderLogo;
   plans: ProviderPlan[];
-  urls: ProviderUrls;
-  intelligence: Intelligence;
-  recommendations: ProviderRecommendations;
+  urls: ProviderLevelUrls;
+  intelligence?: Intelligence;
+  recommendations?: ProviderRecommendations;
 }
 
 export interface ProviderOverride extends Partial<ProviderDefault> {}

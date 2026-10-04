@@ -1,8 +1,63 @@
 const supportedRegionEnum = ['US', 'CA', 'UK', 'EU', 'AU', 'GLOBAL'] as const;
 
+const priceTrendSchema = {
+  type: 'object',
+  required: ['trend'],
+  additionalProperties: false,
+  properties: {
+    trend: { type: 'string', enum: ['upward', 'downward', 'flat'] },
+    last_increase: { type: ['string', 'null'], minLength: 1 },
+    increase_percent: { type: ['number', 'null'] }
+  }
+} as const;
+
+const intelligenceSchema = {
+  type: 'object',
+  required: ['seasonal_pattern', 'value_drift_signals', 'cancellation_difficulty', 'benchmark_anchor'],
+  additionalProperties: false,
+  properties: {
+    seasonal_pattern: {
+      type: 'string',
+      enum: ['winter_release_spike', 'new_year_spike', 'back_to_school', 'election_cycle', 'holiday_season', 'none']
+    },
+    value_drift_signals: { type: 'array', items: { type: 'string' } },
+    cancellation_difficulty: { type: 'number', minimum: 1, maximum: 5 },
+    benchmark_anchor: {
+      type: 'object',
+      required: ['category_rank', 'value_score_baseline'],
+      additionalProperties: false,
+      properties: {
+        category_rank: { type: 'number', minimum: 1 },
+        value_score_baseline: { type: 'number', minimum: 0, maximum: 1 }
+      }
+    }
+  }
+} as const;
+
+const recommendationsSchema = {
+  type: 'object',
+  required: ['alternatives', 'upgrade_paths'],
+  additionalProperties: false,
+  properties: {
+    alternatives: { type: 'array', items: { type: 'string' } },
+    upgrade_paths: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['target_plan_id', 'reason'],
+        additionalProperties: false,
+        properties: {
+          target_plan_id: { type: 'string', minLength: 1 },
+          reason: { type: 'string', minLength: 1 }
+        }
+      }
+    }
+  }
+} as const;
+
 const providerMetaSchema = {
   type: 'object',
-  required: ['logo', 'plans', 'urls', 'intelligence', 'recommendations'],
+  required: ['logo', 'plans', 'urls'],
   additionalProperties: false,
   properties: {
     logo: {
@@ -33,6 +88,26 @@ const providerMetaSchema = {
           notes: { type: ['string', 'null'] },
           url_visibility: { type: 'string', enum: ['public', 'account_required', 'unknown'] },
           access_hint: { type: ['string', 'null'], minLength: 1 },
+          price_trend: priceTrendSchema,
+          source: {
+            type: 'object',
+            required: ['verified_at', 'method'],
+            additionalProperties: false,
+            properties: {
+              url: { type: ['string', 'null'], minLength: 1 },
+              verified_at: { type: 'string', minLength: 1 },
+              method: { type: 'string', enum: ['manual', 'automated'] },
+              evidence: { type: ['string', 'null'], minLength: 1 }
+            },
+            if: { properties: { method: { const: 'automated' } }, required: ['method'] },
+            then: {
+              required: ['url', 'evidence'],
+              properties: {
+                url: { type: 'string', minLength: 1 },
+                evidence: { type: 'string', minLength: 1 }
+              }
+            }
+          },
           urls: {
             type: 'object',
             additionalProperties: false,
@@ -42,6 +117,20 @@ const providerMetaSchema = {
               help_center: { type: ['string', 'null'], minLength: 1 }
             }
           }
+        },
+        if: { properties: { url_visibility: { const: 'account_required' } }, required: ['url_visibility'] },
+        then: {
+          required: ['access_hint', 'source'],
+          properties: {
+            access_hint: { type: 'string', minLength: 1 },
+            source: {
+              required: ['method', 'url'],
+              properties: {
+                method: { const: 'manual' },
+                url: { type: 'null' }
+              }
+            }
+          }
         }
       }
     },
@@ -49,69 +138,14 @@ const providerMetaSchema = {
       type: 'object',
       additionalProperties: false,
       properties: {
+        official: { type: ['string', 'null'], minLength: 1 },
         pricing: { type: ['string', 'null'], minLength: 1 },
         cancellation: { type: ['string', 'null'], minLength: 1 },
         help_center: { type: ['string', 'null'], minLength: 1 }
       }
     },
-    intelligence: {
-      type: 'object',
-      required: ['seasonal_pattern', 'value_drift_signals', 'cancellation_difficulty', 'benchmark_anchor', 'price_trend'],
-      additionalProperties: false,
-      properties: {
-        seasonal_pattern: {
-          type: 'string',
-          enum: ['winter_release_spike', 'new_year_spike', 'back_to_school', 'election_cycle', 'holiday_season', 'none']
-        },
-        value_drift_signals: {
-          type: 'array',
-          items: { type: 'string' }
-        },
-        cancellation_difficulty: { type: 'number', minimum: 1, maximum: 5 },
-        benchmark_anchor: {
-          type: 'object',
-          required: ['category_rank', 'value_score_baseline'],
-          additionalProperties: false,
-          properties: {
-            category_rank: { type: 'number', minimum: 1 },
-            value_score_baseline: { type: 'number', minimum: 0, maximum: 1 }
-          }
-        },
-        price_trend: {
-          type: 'object',
-          required: ['trend'],
-          additionalProperties: false,
-          properties: {
-            trend: { type: 'string', enum: ['upward', 'downward', 'flat'] },
-            last_increase: { type: ['string', 'null'], minLength: 1 },
-            increase_percent: { type: ['number', 'null'] }
-          }
-        }
-      }
-    },
-    recommendations: {
-      type: 'object',
-      required: ['alternatives', 'upgrade_paths'],
-      additionalProperties: false,
-      properties: {
-        alternatives: {
-          type: 'array',
-          items: { type: 'string' }
-        },
-        upgrade_paths: {
-          type: 'array',
-          items: {
-            type: 'object',
-            required: ['target_plan_id', 'reason'],
-            additionalProperties: false,
-            properties: {
-              target_plan_id: { type: 'string', minLength: 1 },
-              reason: { type: 'string', minLength: 1 }
-            }
-          }
-        }
-      }
-    }
+    intelligence: intelligenceSchema,
+    recommendations: recommendationsSchema
   }
 } as const;
 
@@ -167,8 +201,8 @@ export const providerSchema = {
           logo: { type: 'object' },
           plans: { type: 'array' },
           urls: { type: 'object' },
-          intelligence: { type: 'object' },
-          recommendations: { type: 'object' }
+          intelligence: intelligenceSchema,
+          recommendations: recommendationsSchema
         }
       }
     }
