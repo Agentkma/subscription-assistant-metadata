@@ -2,7 +2,9 @@ export type SupportedRegion = 'US' | 'CA' | 'UK' | 'EU' | 'AU' | 'GLOBAL';
 
 export type BillingCycle = 'monthly' | 'yearly' | 'weekly' | 'quarterly';
 
-export type LogoSource = 'app_store' | 'play_store' | 'cdn' | 'fallback';
+export type LogoSource =
+  | { type: 'app_store'; app_store_id: string }
+  | { type: 'official'; url: string };
 
 export type SeasonalPattern =
   | 'winter_release_spike'
@@ -15,11 +17,8 @@ export type SeasonalPattern =
 export type TrendDirection = 'upward' | 'downward' | 'flat';
 
 export interface ProviderLogo {
+  url: string;
   source: LogoSource;
-  app_store_id?: string | null;
-  play_store_package?: string | null;
-  cdn_url?: string | null;
-  fallback_icon?: string | null;
 }
 
 export type UrlVisibility = 'public' | 'account_required' | 'unknown';

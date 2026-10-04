@@ -10,11 +10,11 @@
   "supported": true,
   "default": {
     "logo": {
-      "source": "fallback",
-      "app_store_id": null,
-      "play_store_package": null,
-      "cdn_url": null,
-      "fallback_icon": "netflix"
+      "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/cd/76/f9/cd76f98c-0811-0a8c-7587-715d38832dc9/AppIcon-0-0-1x_U007epad-0-1-0-sRGB-0-85-220.png/512x512bb.jpg",
+      "source": {
+        "type": "app_store",
+        "app_store_id": "363590051"
+      }
     },
     "plans": [
       {

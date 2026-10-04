@@ -10,11 +10,11 @@
   "supported": true,
   "default": {
     "logo": {
-      "source": "fallback",
-      "app_store_id": null,
-      "play_store_package": null,
-      "cdn_url": null,
-      "fallback_icon": "amazon_prime_video"
+      "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/36/ae/4c/36ae4c07-4a4d-8870-d7bc-e4329b9fe281/AppIcon-0-0-1x_U007epad-0-1-0-0-85-220.png/512x512bb.jpg",
+      "source": {
+        "type": "app_store",
+        "app_store_id": "545519333"
+      }
     },
     "plans": [
       {

@@ -4,14 +4,17 @@ This checklist is the roadmap and source-URL tracker for all planned provider co
 
 ## Rules
 
-- Use official provider-owned sources only.
+- Use official provider-owned sources or verified official App Store listings for icons.
 - Prefer pricing, help center, cancellation, and plan pages from the provider itself.
 - Record one canonical category per provider.
 - Track each provider as `seed-candidate`, `queued`, `urls-verified`, `data-reviewed`, or `manual-only`.
 - The inventory below preserves planned category coverage; it is not evidence that any provider data is verified.
 - Only create or retain provider JSON records for active seed providers or providers entering an approved intake batch.
 - Do not publish seed records until their URLs, plans, and prices have been manually verified.
-- Every URL (official, pricing, cancellation, help center, `source.url`) is verified by a human. The pipeline never adds or changes URLs.
+- Every provider/plan URL (official, pricing, cancellation, help center, plan `source.url`) is verified by a human. The LLM never discovers or changes URLs.
+- Record one resolved HTTPS `logo.url` and one source: `app_store` with the approved listing's `app_store_id`, or `official` with a human-verified HTTPS provenance `url`. Prefer square app icons; do not populate multiple alternative sources.
+- Future deterministic App Store lookups may propose refreshed image URLs from approved listing IDs, with PR review. Official-asset replacements remain manual.
+- Check icon identity, appearance, and usage permissions during intake. Official sourcing does not grant redistribution rights. The app owns category-icon fallback behavior.
 - Seed candidates are verified end to end by hand, including plans and prices, with `method: manual`.
 - After the seed trial, remaining providers receive human-verified URLs before plan/price extraction is attempted. Automated drafts require `method: automated`, evidence quotes, and PR review.
 - For account-gated plans, use `source.method: manual`, set `source.url` explicitly to null, and provide a non-empty `access_hint`; these stay manual-only.
@@ -124,9 +127,9 @@ Statuses: `seed-candidate` means selected for manual seed validation but not yet
 
 ## Intake template
 
-| Provider | Category | Official site | Pricing page | Cancellation page | Help center | Logo source | Verified at | Automation | Status | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Example only: Netflix | streaming | https://www.netflix.com | https://help.netflix.com/en/node/24926 | https://help.netflix.com/en/node/407 | https://help.netflix.com | https://assets.nflxext.com/.. |  |  | template | Example links are not verification evidence |
+| Provider | Category | Official site | Pricing page | Cancellation page | Help center | Icon URL | Icon source type | App Store ID or official provenance URL | Verified at | Automation | Status | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Example only: Netflix | streaming | https://www.netflix.com | https://help.netflix.com/en/node/24926 | https://help.netflix.com/en/node/407 | https://help.netflix.com | Copy resolved artwork URL after verification | app_store | 363590051 |  |  | template | Example links are not verification evidence |
 
 ## Collection workflow
 
@@ -135,7 +138,7 @@ Statuses: `seed-candidate` means selected for manual seed validation but not yet
 1. Pick a category and list the target providers.
 2. Confirm the provider has an official public web presence.
 3. Open and confirm the canonical official, pricing, cancellation, and help-center links on provider-owned domains.
-4. Confirm the logo source.
+4. Confirm one official icon source and the provider's identity. Resolve the direct image URL (Apple lookup `artworkUrl512` for an approved App Store ID), inspect the image, and check usage permissions. Record the image URL and source separately.
 5. Record verified URLs and status in this checklist.
 6. Create/update a provider JSON only when that provider enters an active seed or intake batch, then run schema validation.
 
@@ -149,9 +152,12 @@ Statuses: `seed-candidate` means selected for manual seed validation but not yet
 - Check each changed price against the evidence quote and source URL.
 - Reject any automated value without a non-empty source URL and evidence; fix or leave it out before merging.
 - Confirm account-gated entries use manual provenance, `source.url: null`, and a non-empty access hint.
+- Review proposed icon changes against the approved listing identity; confirm the image decodes, has usable dimensions, and still represents the provider. URL health checks must inspect content and redirects, retry transient failures, and distinguish blocked access from broken links.
 - Mark providers the pipeline gets wrong repeatedly as `manual-only`.
 
 ## Automation column
+
+These labels describe plan extraction eligibility. Icon health checks and approved-ID App Store lookups can be assessed independently, subject to source terms and access restrictions.
 
 - `auto-eligible`: public, static pricing page; can be monitored by the scheduled pipeline
 - `manual-only`: JS-heavy, bot-blocked, terms-restricted, or account-gated; re-verify by hand when flagged stale

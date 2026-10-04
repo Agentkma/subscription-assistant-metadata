@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Ajv } from 'ajv';
+import { fullFormats } from 'ajv-formats/dist/formats.js';
 import { providerSchema } from '../src/schema.js';
 import { validateProviderFile, validateProvidersDirectory } from '../src/validateProviders.js';
 // NodeNext + ESM requires the .js extension in the import specifier.
@@ -34,7 +35,7 @@ test('validates the US-only default-plus-region schema', async () => {
 });
 
 test('public contract accepts optional insights, recommendations, and plan trends', async () => {
-  const validate = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true }).compile(providerSchema);
+  const validate = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true }).addFormat('uri', fullFormats.uri).compile(providerSchema);
   const raw = await fs.readFile('metadata/providers/streaming/netflix.json', 'utf8');
   const provider = JSON.parse(raw);
 
@@ -63,6 +64,7 @@ test('public contract accepts optional insights, recommendations, and plan trend
 
 test('requires a URL and evidence when plan source method is automated', async () => {
   const ajv = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true });
+  ajv.addFormat('uri', fullFormats.uri);
   const validate = ajv.compile(providerSchema);
   const raw = await fs.readFile('metadata/providers/streaming/amazon_prime_video.json', 'utf8');
   const provider = JSON.parse(raw);
@@ -87,7 +89,7 @@ test('requires a URL and evidence when plan source method is automated', async (
 });
 
 test('requires manual null-URL provenance and an access hint for account-gated plans', async () => {
-  const validate = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true }).compile(providerSchema);
+  const validate = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true }).addFormat('uri', fullFormats.uri).compile(providerSchema);
   const raw = await fs.readFile('metadata/providers/streaming/amazon_prime_video.json', 'utf8');
   const provider = JSON.parse(raw);
 
@@ -114,6 +116,51 @@ test('requires manual null-URL provenance and an access hint for account-gated p
   const publicSourceUrl = structuredClone(provider);
   publicSourceUrl.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ultra').source.url = 'https://www.amazon.us/prime';
   assert.equal(validate(publicSourceUrl), false);
+});
+
+test('requires a renderable HTTPS logo URL and exactly one supported source', async () => {
+  const validate = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true }).addFormat('uri', fullFormats.uri).compile(providerSchema);
+  const provider = JSON.parse(await fs.readFile('metadata/providers/music_audio/spotify.json', 'utf8'));
+
+  assert.equal(validate(provider), true);
+
+  const invalidLogos = [
+    { source: { type: 'app_store', app_store_id: '324684580' } },
+    { url: provider.default.logo.url },
+    ...['', null, 'not a URL', 'https://bad host/icon.png', 'http://example.com/icon.png'].map((url) => ({
+      url,
+      source: provider.default.logo.source
+    })),
+    ...[
+      { type: 'app_store' },
+      { type: 'app_store', app_store_id: '' },
+      { type: 'app_store', app_store_id: 'spotify' },
+      { type: 'app_store', app_store_id: null },
+      { type: 'app_store', app_store_id: '324684580', url: 'https://www.spotify.com' },
+      { type: 'official' },
+      { type: 'official', url: 'not a URL' },
+      { type: 'official', url: 'http://www.spotify.com' },
+      { type: 'play_store', play_store_package: 'com.spotify.music' }
+    ].map((source) => ({ url: provider.default.logo.url, source })),
+    { ...provider.default.logo, fallback_icon: 'spotify' },
+    { source: 'fallback', app_store_id: '324684580', cdn_url: provider.default.logo.url }
+  ];
+
+  for (const logo of invalidLogos) {
+    const invalid = structuredClone(provider);
+    invalid.default.logo = logo;
+    assert.equal(validate(invalid), false, JSON.stringify(logo));
+  }
+
+  const official = structuredClone(provider);
+  official.default.logo.source = { type: 'official', url: 'https://www.spotify.com' };
+  assert.equal(validate(official), true);
+
+  const regional = structuredClone(provider);
+  regional.regional_overrides.US.logo = structuredClone(provider.default.logo);
+  assert.equal(validate(regional), true);
+  regional.regional_overrides.US.logo = { source: 'fallback' };
+  assert.equal(validate(regional), false);
 });
 
 test('contains the canonical MVP category catalog', async () => {

@@ -101,11 +101,18 @@ These category lists are intentionally coverage-oriented and can include a few o
 
 ### Provider logo object
 
-- source
-- app_store_id
-- play_store_package
-- cdn_url
-- fallback_icon
+- `url` (required): resolved HTTPS image URL consumed by the app
+- `source` (required): exactly one provenance/refresh record:
+  - `type: app_store` with a required numeric-string `app_store_id` identifying a verified official listing
+  - `type: official` with a required HTTPS `url` identifying a human-verified official asset or provenance page
+
+Prefer recognizable square app icons from official App Store listings. If no suitable listing exists, manually select an official asset. The three seeds now use resolved App Store artwork URLs and stable listing IDs. Lookup results confirm listing names and publishers; human visual and usage-permission review remains part of seed verification.
+
+The app only loads and caches `logo.url`; a category-icon fallback is app-owned. There is no runtime store lookup or multi-source fallback chain. Regional logo overrides must use the same complete contract. The old `source` string and top-level `app_store_id`, `play_store_package`, `cdn_url`, and `fallback_icon` fields have been removed. This is a breaking contract change; increment `schemaVersion` when releasing it to consumers.
+
+Initially link directly to official-hosted images. Hosting approved copies can be considered later after checking redistribution permissions; official provenance is not permission to use or redistribute an asset.
+
+Future scripts resolve `app_store` sources through Apple's lookup API using the approved ID and applicable country (the seeds use `US`), then propose updated artwork URLs for review. Non-country region codes require an explicit country mapping before lookup. `official` sources support image health checks but replacement discovery stays manual. These scripts are deferred until the seeds are reviewed.
 
 ### Plan object
 
@@ -180,7 +187,7 @@ Conditional plan rules:
   - types/
   - validators/
   - builders/
-  - utils/
+  - utils/****
 - dist/
   - providers.json
   - version.json
@@ -283,16 +290,16 @@ This aligns with the app release pattern of shipping a baseline bundle and fetch
 
 ## Automated update strategy
 
-The dataset is kept current by a GitHub Actions pipeline that combines deterministic scripts with a constrained LLM API call. The LLM only extracts; scripts validate; a human approves every change via PR.
+The planned GitHub Actions pipeline will keep the dataset current by combining deterministic scripts with a constrained LLM API call. The LLM only extracts; scripts validate; a human approves every change via PR.
 
-URLs are always human-verified. The LLM never discovers or proposes URLs; it only reads pages at URLs a human has already confirmed.
+Provider and plan source URLs, official logo provenance pages, and App Store listing identities are human-verified. The LLM never discovers or proposes URLs; it only reads pages at URLs a human has already confirmed. Deterministic App Store lookups may propose refreshed `logo.url` values from approved IDs, subject to PR review.
 
 ### Field ownership
 
 | Field type | Fields | Update method |
 | --- | --- | --- |
-| Deterministic | `urls.*` liveness, `logo` (App Store lookup), schema validity, staleness of `source.verified_at` | Script |
-| Human-verified | `urls.*` values (official, pricing, cancellation, help center), `source.url` | Manual, for every provider |
+| Deterministic | Provider URL health, `logo.url` image health, App Store artwork refresh from approved IDs, schema validity, staleness of plan `source.verified_at` | Script; changes require PR review |
+| Human-verified | `urls.*` values (official, pricing, cancellation, help center), plan `source.url`, logo listing identity or official provenance URL, manually selected official image URL | Manual, for every provider |
 | Extracted facts | `plans[]` names, prices, billing cycles, `url_visibility` | LLM API extraction from fetched pages, with evidence |
 | Derived public fact | `plans[].price_trend` | Computed from public price history; omitted until history exists |
 | Curated public insights | `intelligence`, `recommendations` | Draft against a written rubric; human-reviewed before publishing; values are public |
@@ -305,14 +312,15 @@ URLs are always human-verified. The LLM never discovers or proposes URLs; it onl
 3. Script hashes the relevant page content; unchanged pages only get a last-checked update.
 4. For changed pages, an LLM API call receives the page text plus the plan schema and returns structured JSON with a quoted evidence snippet per value.
 5. Scripts validate the output: AJV schema, currency/billing-cycle checks, flag price changes > ~25%, flag removed plans, reject values missing evidence.
-6. Script runs URL liveness checks and App Store logo lookups.
+6. Script checks provider URL availability, redirects, and expected content; fetches and decodes `logo.url` to check usable image content and dimensions; and proposes refreshed App Store artwork URLs from approved IDs. Retry transient errors and report blocked requests separately from broken URLs. HTTP 200 alone is not sufficient.
 7. Pipeline opens a PR with old → new values, evidence, and source URLs. Nothing auto-merges.
 8. On merge: build bundle, publish to GitHub Pages.
 
 ### Guardrails
 
 - Fetched page content is untrusted input (prompt injection risk). The LLM step has no write access or secrets beyond its API key and returns JSON only.
-- The LLM never outputs URLs into provider files; any URL change is a human edit.
+- The LLM never outputs URLs into provider files. Provider/plan URL changes and official-asset replacements are human edits; deterministic artwork refreshes from approved App Store IDs are the only automated URL-change proposals and require review.
+- Verify logo identity and usage permissions during manual intake; a successful image fetch does not establish either. Do not host copies without checking redistribution permissions.
 - Schema validation and PR review are the enforcement layer, not the model.
 - Providers that block automated fetches or have no public pricing page are marked manual-only.
 - Check provider terms of service before automated fetching; prefer official help articles or APIs.
@@ -332,7 +340,7 @@ URLs are always human-verified. The LLM never discovers or proposes URLs; it onl
 
 1. Seed providers: fully verify 2–3 providers by hand that cover different cases (Netflix: static multi-tier; Prime Video: bundle + account-gated add-on; one JS-heavy monthly/yearly page such as Spotify or Disney+). These become the extractor's ground truth.
 2. Local pipeline: fetch → LLM extract → schema/sanity checks → diff against seed files. Tune prompt and rules until seed providers match.
-3. URL intake for remaining providers: human verifies and records `urls.*` and `source.url` for each provider (quick pass, no pricing research).
+3. URL intake for remaining providers: human verifies and records `urls.*`, plan `source.url`, and one official icon source plus resolved `logo.url` for each provider (quick pass, no pricing research).
 4. Automated first pass, one category per PR: pipeline extracts plans/prices from the human-verified URLs with `method: automated` and evidence. Human reviews, corrects, merges. Providers the pipeline can't handle are marked `manual-only`.
 5. Scheduled GitHub Actions job: URL liveness, staleness, page-change detection, and re-extraction on change → PR.
 6. Quarterly LLM-drafted insight/recommendation review against the rubric, with human approval.
@@ -355,7 +363,7 @@ URLs are always human-verified. The LLM never discovers or proposes URLs; it onl
   - unique plan ids
   - category recognition
   - valid regions
-  - allowed logo sources
+  - required HTTPS logo image URL and exactly one supported source record, including regional overrides
 - Add CI validation step
 
 ### Phase 3: External enrichment and public price trend computation

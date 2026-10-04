@@ -1,5 +1,36 @@
 const supportedRegionEnum = ['US', 'CA', 'UK', 'EU', 'AU', 'GLOBAL'] as const;
 
+const logoSchema = {
+  type: 'object',
+  required: ['url', 'source'],
+  additionalProperties: false,
+  properties: {
+    url: { type: 'string', format: 'uri', pattern: '^https://' },
+    source: {
+      oneOf: [
+        {
+          type: 'object',
+          required: ['type', 'app_store_id'],
+          additionalProperties: false,
+          properties: {
+            type: { const: 'app_store' },
+            app_store_id: { type: 'string', pattern: '^[0-9]+$' }
+          }
+        },
+        {
+          type: 'object',
+          required: ['type', 'url'],
+          additionalProperties: false,
+          properties: {
+            type: { const: 'official' },
+            url: { type: 'string', format: 'uri', pattern: '^https://' }
+          }
+        }
+      ]
+    }
+  }
+} as const;
+
 const priceTrendSchema = {
   type: 'object',
   required: ['trend'],
@@ -60,18 +91,7 @@ const providerMetaSchema = {
   required: ['logo', 'plans', 'urls'],
   additionalProperties: false,
   properties: {
-    logo: {
-      type: 'object',
-      required: ['source'],
-      additionalProperties: false,
-      properties: {
-        source: { type: 'string', enum: ['app_store', 'play_store', 'cdn', 'fallback'] },
-        app_store_id: { type: ['string', 'null'] },
-        play_store_package: { type: ['string', 'null'] },
-        cdn_url: { type: ['string', 'null'] },
-        fallback_icon: { type: ['string', 'null'] }
-      }
-    },
+    logo: logoSchema,
     plans: {
       type: 'array',
       minItems: 1,
@@ -198,7 +218,7 @@ export const providerSchema = {
         type: 'object',
         additionalProperties: false,
         properties: {
-          logo: { type: 'object' },
+          logo: logoSchema,
           plans: { type: 'array' },
           urls: { type: 'object' },
           intelligence: intelligenceSchema,

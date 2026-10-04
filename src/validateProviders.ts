@@ -1,9 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { Ajv, type ErrorObject } from 'ajv';
+import { fullFormats } from 'ajv-formats/dist/formats.js';
 import { providerSchema } from './schema.js';
 
 const ajv = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true });
+ajv.addFormat('uri', fullFormats.uri);
 const validate = ajv.compile(providerSchema);
 
 const formatValidationError = (error: ErrorObject): string => {

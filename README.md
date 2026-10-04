@@ -44,6 +44,26 @@ The repository uses a JSON Schema contract to define the required shape of each 
 
 Automated plan provenance requires a non-empty source URL and evidence. Account-gated plans require manual provenance with `source.url: null` and a non-empty `access_hint`.
 
+### Provider icons
+
+Each `logo` contains one resolved HTTPS image URL and one source record. Prefer recognizable square app icons from a verified official App Store listing:
+
+```json
+{
+  "url": "https://official-image-host.example/provider-icon.png",
+  "source": {
+    "type": "app_store",
+    "app_store_id": "324684580"
+  }
+}
+```
+
+The image URL above is illustrative, not a verified asset. When no suitable App Store icon exists, use `source: { "type": "official", "url": "https://provider.example/brand-assets" }` with a human-verified official provenance page and a direct image URL. Both URL fields must be HTTPS. Regional logo overrides use the same complete object; legacy logo fields are no longer accepted.
+
+The app renders and caches `logo.url`, using its own category icon on failure. Store lookups and source selection belong to this repository, not the app. Start with direct official image URLs; hosting copies is deferred pending redistribution-permission review. Official sourcing does not itself grant usage rights.
+
+Planned automation will refresh App Store artwork through Apple's lookup API using the approved ID and the provider's region, check provider URL availability and redirects, and fetch/decode icons to verify their content and dimensions. Retry transient failures and distinguish blocked requests from broken links. HTTP 200 alone is not proof of usable content. Scripts may propose refreshed artwork URLs from approved IDs; the LLM never discovers URLs, and changes require PR review. Official-source replacements remain manual. These network checks are not implemented by the local schema validator yet.
+
 The validation is implemented in TypeScript and runs locally and in CI before publication, which keeps the public bundle consistent and safe for downstream consumers.
 
 ## Publishing and versioning
