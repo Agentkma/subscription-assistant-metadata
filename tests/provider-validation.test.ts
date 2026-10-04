@@ -15,6 +15,10 @@ test('validates a known-good provider file', async () => {
 test('validates the provider directory without errors', async () => {
   const results = await validateProvidersDirectory('metadata/providers');
   assert.equal(results.some((result) => result.valid === false), false);
+  assert.deepEqual(
+    results.map((result) => result.file.split(/[\\/]/).slice(-2).join('/')).sort(),
+    ['music_audio/spotify.json', 'streaming/amazon_prime_video.json', 'streaming/netflix.json'].sort()
+  );
 });
 
 test('validates the US-only default-plus-region schema', async () => {
@@ -27,6 +31,29 @@ test('validates the US-only default-plus-region schema', async () => {
   assert.equal(Array.isArray(provider.default.plans), true);
   assert.equal(typeof provider.regional_overrides, 'object');
   assert.deepEqual(Object.keys(provider.regional_overrides), ['US']);
+});
+
+test('public contract excludes editorial metadata and allows optional plan trends', async () => {
+  const validate = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true }).compile(providerSchema);
+  const raw = await fs.readFile('metadata/providers/streaming/netflix.json', 'utf8');
+  const provider = JSON.parse(raw);
+
+  assert.equal(validate(provider), true);
+
+  const withEditorialData = structuredClone(provider);
+  withEditorialData.default.intelligence = {};
+  assert.equal(validate(withEditorialData), false);
+
+  const withRecommendations = structuredClone(provider);
+  withRecommendations.default.recommendations = {};
+  assert.equal(validate(withRecommendations), false);
+
+  const withPlanTrend = structuredClone(provider);
+  withPlanTrend.default.plans[0].price_trend = { trend: 'flat' };
+  assert.equal(validate(withPlanTrend), true);
+
+  withPlanTrend.default.plans[0].price_trend = { trend: 'sideways' };
+  assert.equal(validate(withPlanTrend), false);
 });
 
 test('requires evidence when plan source method is automated', async () => {

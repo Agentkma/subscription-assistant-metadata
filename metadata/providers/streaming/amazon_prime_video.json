@@ -83,27 +83,6 @@
       "pricing": "https://www.amazon.us/prime",
       "cancellation": "https://www.amazon.com/gp/help/customer/display.html?nodeId=GZLQX3F4FJQ2K2K4",
       "help_center": "https://www.primevideo.com/help"
-    },
-    "intelligence": {
-      "seasonal_pattern": "holiday_season",
-      "value_drift_signals": [
-        "price_increase",
-        "feature_packaging"
-      ],
-      "cancellation_difficulty": 2,
-      "benchmark_anchor": {
-        "category_rank": 1,
-        "value_score_baseline": 0.8
-      },
-      "price_trend": {
-        "trend": "flat",
-        "last_increase": "2026-01-01",
-        "increase_percent": 0
-      }
-    },
-    "recommendations": {
-      "alternatives": [],
-      "upgrade_paths": []
     }
   },
   "regional_overrides": {

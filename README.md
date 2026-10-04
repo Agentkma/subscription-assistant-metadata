@@ -23,9 +23,7 @@ It does not contain:
 
 ## Current focus
 
-This repository is currently focused on the real-source metadata intake phase. The priority is to define and complete the canonical category catalog, then collect verified public provider data using a source checklist before implementing any automation workflow.
-
-The automation layer is intentionally deferred. We are not yet building fetch/update logic or sync scripts; the immediate work is to validate the category coverage, confirm official provider sources, and verify the public URLs and metadata before publishing the bundle.
+The current phase keeps three seed provider records for manual verification and an LLM extraction trial: Netflix, Amazon Prime Video, and Spotify. The other planned providers are tracked in `provider-source-checklist.md` and do not have active JSON records yet. Seed records are drafts until their URLs, plans, and prices have been checked; do not publish them as verified data before that review.
 
 ## Metadata model
 
@@ -34,8 +32,10 @@ The bundle is built around provider metadata for subscription services, includin
 - provider identity and category mapping
 - pricing and billing metadata
 - regional support and plan details
-- cancellation and value signals
-- seasonal and recommendation metadata
+- official source URLs and verification provenance
+- optional plan-level price trends derived from public price history
+
+The published catalog is intentionally partial during the seed and automation trial. Scoring, benchmarks, editorial signals, and recommendations belong to the private app, not this public metadata contract.
 
 ## Schema and validation
 
