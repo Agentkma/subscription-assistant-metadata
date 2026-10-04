@@ -33,20 +33,25 @@ test('validates the US-only default-plus-region schema', async () => {
   assert.deepEqual(Object.keys(provider.regional_overrides), ['US']);
 });
 
-test('public contract excludes editorial metadata and allows optional plan trends', async () => {
+test('public contract accepts optional insights, recommendations, and plan trends', async () => {
   const validate = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true }).compile(providerSchema);
   const raw = await fs.readFile('metadata/providers/streaming/netflix.json', 'utf8');
   const provider = JSON.parse(raw);
 
   assert.equal(validate(provider), true);
 
-  const withEditorialData = structuredClone(provider);
-  withEditorialData.default.intelligence = {};
-  assert.equal(validate(withEditorialData), false);
+  const withInsights = structuredClone(provider);
+  withInsights.default.intelligence = {
+    seasonal_pattern: 'none',
+    value_drift_signals: ['price_increase'],
+    cancellation_difficulty: 3,
+    benchmark_anchor: { category_rank: 1, value_score_baseline: 0.8 }
+  };
+  withInsights.default.recommendations = { alternatives: [], upgrade_paths: [] };
+  assert.equal(validate(withInsights), true);
 
-  const withRecommendations = structuredClone(provider);
-  withRecommendations.default.recommendations = {};
-  assert.equal(validate(withRecommendations), false);
+  withInsights.default.intelligence.cancellation_difficulty = 6;
+  assert.equal(validate(withInsights), false);
 
   const withPlanTrend = structuredClone(provider);
   withPlanTrend.default.plans[0].price_trend = { trend: 'flat' };

@@ -34,8 +34,9 @@ The bundle is built around provider metadata for subscription services, includin
 - regional support and plan details
 - official source URLs and verification provenance
 - optional plan-level price trends derived from public price history
+- optional provider insights and recommendations for the app to present
 
-The published catalog is intentionally partial during the seed and automation trial. Scoring, benchmarks, editorial signals, and recommendations belong to the private app, not this public metadata contract.
+The published catalog is intentionally partial during the seed and automation trial. Insight values and recommendations included in the bundle are public and downloadable. The app's client-side scoring and presentation logic remains outside this repo, but code shipped in a client app should not be treated as confidential.
 
 ## Schema and validation
 

@@ -4,6 +4,14 @@ export type BillingCycle = 'monthly' | 'yearly' | 'weekly' | 'quarterly';
 
 export type LogoSource = 'app_store' | 'play_store' | 'cdn' | 'fallback';
 
+export type SeasonalPattern =
+  | 'winter_release_spike'
+  | 'new_year_spike'
+  | 'back_to_school'
+  | 'election_cycle'
+  | 'holiday_season'
+  | 'none';
+
 export type TrendDirection = 'upward' | 'downward' | 'flat';
 
 export interface ProviderLogo {
@@ -56,10 +64,34 @@ export interface PriceTrend {
   increase_percent?: number | null;
 }
 
+export interface BenchmarkAnchor {
+  category_rank: number;
+  value_score_baseline: number;
+}
+
+export interface Intelligence {
+  seasonal_pattern: SeasonalPattern;
+  value_drift_signals: string[];
+  cancellation_difficulty: number;
+  benchmark_anchor: BenchmarkAnchor;
+}
+
+export interface UpgradePath {
+  target_plan_id: string;
+  reason: string;
+}
+
+export interface ProviderRecommendations {
+  alternatives: string[];
+  upgrade_paths: UpgradePath[];
+}
+
 export interface ProviderDefault {
   logo: ProviderLogo;
   plans: ProviderPlan[];
   urls: ProviderLevelUrls;
+  intelligence?: Intelligence;
+  recommendations?: ProviderRecommendations;
 }
 
 export interface ProviderOverride extends Partial<ProviderDefault> {}
