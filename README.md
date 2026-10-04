@@ -42,6 +42,8 @@ The published catalog is intentionally partial during the seed and automation tr
 
 The repository uses a JSON Schema contract to define the required shape of each provider record. This is a data contract, not app logic: it enforces required fields, allowed enum values, nested object shapes, and compatibility constraints before metadata is published.
 
+Automated plan provenance requires a non-empty source URL and evidence. Account-gated plans require manual provenance with `source.url: null` and a non-empty `access_hint`.
+
 The validation is implemented in TypeScript and runs locally and in CI before publication, which keeps the public bundle consistent and safe for downstream consumers.
 
 ## Publishing and versioning

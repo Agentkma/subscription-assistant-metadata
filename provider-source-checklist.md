@@ -14,7 +14,8 @@ This checklist is the roadmap and source-URL tracker for all planned provider co
 - Every URL (official, pricing, cancellation, help center, `source.url`) is verified by a human. The pipeline never adds or changes URLs.
 - Seed candidates are verified end to end by hand, including plans and prices, with `method: manual`.
 - After the seed trial, remaining providers receive human-verified URLs before plan/price extraction is attempted. Automated drafts require `method: automated`, evidence quotes, and PR review.
-- For account-gated plans, set `source.url` to null and add an `access_hint`; these stay manual-only.
+- For account-gated plans, use `source.method: manual`, set `source.url` explicitly to null, and provide a non-empty `access_hint`; these stay manual-only.
+- For automated plan data, require a human-verified, non-empty `source.url` and a non-empty evidence quote. Never accept an automated record with a missing or null source URL.
 - Note whether each provider's pricing page is automation-friendly (static HTML) or manual-only (JS-heavy, bot-blocked, or gated).
 
 ## Canonical categories
@@ -146,7 +147,8 @@ Statuses: `seed-candidate` means selected for manual seed validation but not yet
 ### Reviewing automated drafts
 
 - Check each changed price against the evidence quote and source URL.
-- Reject any value without evidence; fix or null it before merging.
+- Reject any automated value without a non-empty source URL and evidence; fix or leave it out before merging.
+- Confirm account-gated entries use manual provenance, `source.url: null`, and a non-empty access hint.
 - Mark providers the pipeline gets wrong repeatedly as `manual-only`.
 
 ## Automation column

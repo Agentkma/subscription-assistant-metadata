@@ -116,13 +116,18 @@ These category lists are intentionally coverage-oriented and can include a few o
 - price_last_updated
 - notes (optional)
 - url_visibility (optional): `public` | `account_required` | `unknown`
-- access_hint (optional): user-facing guidance for account-gated plans; never treated as a public source
+- access_hint (optional generally; required and non-empty when `url_visibility` is `account_required`): user-facing guidance, never treated as a public source
 - urls (optional): plan-specific pricing/cancellation/help links; null when account-gated
 - source (optional, required before automation is enabled for a provider):
-  - url: page the price was confirmed on (null for account-gated plans)
+  - url: page the price was confirmed on (required and non-empty for automated sources; explicitly null for account-gated plans)
   - verified_at: last date a human or the pipeline confirmed the value
   - method: `manual` | `automated`
-  - evidence: short quoted snippet from the source page (required for `automated`)
+  - evidence: short quoted snippet from the source page (required and non-empty for `automated`)
+
+Conditional plan rules:
+
+- `source.method: automated` requires a non-empty `source.url` and `source.evidence`.
+- `url_visibility: account_required` requires a non-empty `access_hint` and `source.method: manual` with `source.url: null`.
 
 ### URLs object
 
