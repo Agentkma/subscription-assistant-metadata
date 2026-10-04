@@ -61,7 +61,7 @@ test('public contract accepts optional insights, recommendations, and plan trend
   assert.equal(validate(withPlanTrend), false);
 });
 
-test('requires evidence when plan source method is automated', async () => {
+test('requires a URL and evidence when plan source method is automated', async () => {
   const ajv = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true });
   const validate = ajv.compile(providerSchema);
   const raw = await fs.readFile('metadata/providers/streaming/amazon_prime_video.json', 'utf8');
@@ -76,7 +76,44 @@ test('requires evidence when plan source method is automated', async () => {
   assert.equal(validate(provider), false);
 
   source.evidence = 'Prime membership $14.99/month';
+  delete source.url;
+  assert.equal(validate(provider), false);
+
+  source.url = null;
+  assert.equal(validate(provider), false);
+
+  source.url = 'https://www.amazon.us/prime';
   assert.equal(validate(provider), true);
+});
+
+test('requires manual null-URL provenance and an access hint for account-gated plans', async () => {
+  const validate = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true }).compile(providerSchema);
+  const raw = await fs.readFile('metadata/providers/streaming/amazon_prime_video.json', 'utf8');
+  const provider = JSON.parse(raw);
+
+  assert.equal(validate(provider), true);
+
+  const withoutHint = structuredClone(provider);
+  delete withoutHint.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ultra').access_hint;
+  assert.equal(validate(withoutHint), false);
+
+  const emptyHint = structuredClone(provider);
+  emptyHint.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ultra').access_hint = '';
+  assert.equal(validate(emptyHint), false);
+
+  const automatedSource = structuredClone(provider);
+  const automatedPlan = automatedSource.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ultra');
+  automatedPlan.source.method = 'automated';
+  automatedPlan.source.evidence = 'Plan details';
+  assert.equal(validate(automatedSource), false);
+
+  const missingSourceUrl = structuredClone(provider);
+  delete missingSourceUrl.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ultra').source.url;
+  assert.equal(validate(missingSourceUrl), false);
+
+  const publicSourceUrl = structuredClone(provider);
+  publicSourceUrl.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ultra').source.url = 'https://www.amazon.us/prime';
+  assert.equal(validate(publicSourceUrl), false);
 });
 
 test('contains the canonical MVP category catalog', async () => {

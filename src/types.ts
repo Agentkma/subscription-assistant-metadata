@@ -26,27 +26,45 @@ export type UrlVisibility = 'public' | 'account_required' | 'unknown';
 
 export type SourceMethod = 'manual' | 'automated';
 
-export type PlanSource = {
+export type ManualPlanSource = {
   url?: string | null;
   verified_at: string;
-} & (
-  | { method: 'manual'; evidence?: string | null }
-  | { method: 'automated'; evidence: string }
-);
+  method: 'manual';
+  evidence?: string | null;
+};
 
-export interface ProviderPlan {
+export type AutomatedPlanSource = {
+  url: string;
+  verified_at: string;
+  method: 'automated';
+  evidence: string;
+};
+
+export type PlanSource = ManualPlanSource | AutomatedPlanSource;
+
+interface ProviderPlanBase {
   plan_id: string;
   name: string;
   billing_cycle: BillingCycle;
   base_price_usd: number;
   price_last_updated: string;
   notes?: string;
-  url_visibility?: UrlVisibility;
-  access_hint?: string | null;
-  source?: PlanSource;
   price_trend?: PriceTrend;
   urls?: ProviderUrls;
 }
+
+export type ProviderPlan = ProviderPlanBase & (
+  | {
+      url_visibility: 'account_required';
+      access_hint: string;
+      source: ManualPlanSource & { url: null };
+    }
+  | {
+      url_visibility?: Exclude<UrlVisibility, 'account_required'>;
+      access_hint?: string | null;
+      source?: PlanSource;
+    }
+);
 
 export interface ProviderUrls {
   pricing?: string | null;

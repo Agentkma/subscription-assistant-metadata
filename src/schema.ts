@@ -100,7 +100,13 @@ const providerMetaSchema = {
               evidence: { type: ['string', 'null'], minLength: 1 }
             },
             if: { properties: { method: { const: 'automated' } }, required: ['method'] },
-            then: { required: ['evidence'], properties: { evidence: { type: 'string', minLength: 1 } } }
+            then: {
+              required: ['url', 'evidence'],
+              properties: {
+                url: { type: 'string', minLength: 1 },
+                evidence: { type: 'string', minLength: 1 }
+              }
+            }
           },
           urls: {
             type: 'object',
@@ -109,6 +115,20 @@ const providerMetaSchema = {
               pricing: { type: ['string', 'null'], minLength: 1 },
               cancellation: { type: ['string', 'null'], minLength: 1 },
               help_center: { type: ['string', 'null'], minLength: 1 }
+            }
+          }
+        },
+        if: { properties: { url_visibility: { const: 'account_required' } }, required: ['url_visibility'] },
+        then: {
+          required: ['access_hint', 'source'],
+          properties: {
+            access_hint: { type: 'string', minLength: 1 },
+            source: {
+              required: ['method', 'url'],
+              properties: {
+                method: { const: 'manual' },
+                url: { type: 'null' }
+              }
             }
           }
         }
