@@ -18,17 +18,31 @@
     },
     "plans": [
       {
+        "plan_id": "standard_with_ads",
+        "name": "Standard with Ads",
+        "billing_cycle": "monthly",
+        "base_price_usd": 8.99,
+        "price_last_updated": "2026-03-31"
+      },
+      {
         "plan_id": "standard",
         "name": "Standard",
         "billing_cycle": "monthly",
-        "base_price_usd": 15.49,
-        "price_last_updated": "2026-09-12"
+        "base_price_usd": 19.99,
+        "price_last_updated": "2026-03-31"
+      },
+      {
+        "plan_id": "premium",
+        "name": "Premium",
+        "billing_cycle": "monthly",
+        "base_price_usd": 26.99,
+        "price_last_updated": "2026-03-31"
       }
     ],
     "urls": {
-      "pricing": "https://example.com/netflix",
-      "cancellation": "https://example.com/netflix/cancel",
-      "help_center": "https://help.example.com/netflix"
+      "pricing": "https://www.netflix.com/signup",
+      "cancellation": "https://www.netflix.com/youraccount",
+      "help_center": "https://help.netflix.com/"
     }
   },
   "regional_overrides": {

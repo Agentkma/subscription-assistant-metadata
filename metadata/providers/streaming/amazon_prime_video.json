@@ -18,48 +18,48 @@
     },
     "plans": [
       {
-        "plan_id": "prime_bundle_monthly",
+        "plan_id": "prime_monthly",
         "name": "Amazon Prime (Monthly)",
         "billing_cycle": "monthly",
-        "base_price_usd": 9.99,
+        "base_price_usd": 14.99,
         "price_last_updated": "2026-09-12",
         "notes": "Prime Video bundled with Amazon Prime membership.",
         "url_visibility": "public",
         "source": {
-          "url": "https://www.amazon.us/prime",
+          "url": "https://www.amazon.com/amazonprime",
           "verified_at": "2026-09-12",
           "method": "manual",
           "evidence": null
         },
         "urls": {
-          "pricing": "https://www.amazon.us/prime",
-          "cancellation": "https://www.amazon.com/gp/help/customer/display.html?nodeId=GZLQX3F4FJQ2K2K4",
-          "help_center": "https://www.primevideo.com/help"
+          "pricing": "https://www.amazon.com/amazonprime",
+          "cancellation": "https://www.amazon.com/mc/manage",
+          "help_center": "https://www.amazon.com/gp/help/customer/display.html?nodeId=201889810"
         }
       },
       {
-        "plan_id": "prime_bundle_yearly",
-        "name": "Amazon Prime (Yearly)",
+        "plan_id": "prime_annual",
+        "name": "Amazon Prime (Annual)",
         "billing_cycle": "yearly",
-        "base_price_usd": 99,
+        "base_price_usd": 139,
         "price_last_updated": "2026-09-12",
         "notes": "Annual Amazon Prime membership that includes Prime Video.",
         "url_visibility": "public",
         "source": {
-          "url": "https://www.amazon.us/prime",
+          "url": "https://www.amazon.com/amazonprime",
           "verified_at": "2026-09-12",
           "method": "manual",
           "evidence": null
         },
         "urls": {
-          "pricing": "https://www.amazon.us/prime",
-          "cancellation": "https://www.amazon.com/gp/help/customer/display.html?nodeId=GZLQX3F4FJQ2K2K4",
-          "help_center": "https://www.primevideo.com/help"
+          "pricing": "https://www.amazon.com/amazonprime",
+          "cancellation": "https://www.amazon.com/mc/manage",
+          "help_center": "https://www.amazon.com/gp/help/customer/display.html?nodeId=201889810"
         }
       },
       {
-        "plan_id": "prime_video_ultra",
-        "name": "Prime Video Ultra (Ad-Free)",
+        "plan_id": "prime_video_ad_free_addon",
+        "name": "Prime Video Ad-Free Add-on",
         "billing_cycle": "monthly",
         "base_price_usd": 4.99,
         "price_last_updated": "2026-09-12",
@@ -80,9 +80,9 @@
       }
     ],
     "urls": {
-      "pricing": "https://www.amazon.us/prime",
-      "cancellation": "https://www.amazon.com/gp/help/customer/display.html?nodeId=GZLQX3F4FJQ2K2K4",
-      "help_center": "https://www.primevideo.com/help"
+      "pricing": "https://www.amazon.com/amazonprime",
+      "cancellation": "https://www.amazon.com/mc/manage",
+      "help_center": "https://www.amazon.com/gp/help/customer/display.html?nodeId=201889810"
     }
   },
   "regional_overrides": {
