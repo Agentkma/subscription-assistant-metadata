@@ -96,25 +96,25 @@ test('requires manual null-URL provenance and an access hint for account-gated p
   assert.equal(jsonValidator(provider), true);
 
   const withoutHint = structuredClone(provider);
-  delete withoutHint.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ad_free_addon').access_hint;
+  delete withoutHint.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ultra').access_hint;
   assert.equal(jsonValidator(withoutHint), false);
 
   const emptyHint = structuredClone(provider);
-  emptyHint.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ad_free_addon').access_hint = '';
+  emptyHint.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ultra').access_hint = '';
   assert.equal(jsonValidator(emptyHint), false);
 
   const automatedSource = structuredClone(provider);
-  const automatedPlan = automatedSource.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ad_free_addon');
+  const automatedPlan = automatedSource.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ultra');
   automatedPlan.source.method = 'automated';
   automatedPlan.source.evidence = 'Plan details';
   assert.equal(jsonValidator(automatedSource), false);
 
   const missingSourceUrl = structuredClone(provider);
-  delete missingSourceUrl.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ad_free_addon').source.url;
+  delete missingSourceUrl.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ultra').source.url;
   assert.equal(jsonValidator(missingSourceUrl), false);
 
   const publicSourceUrl = structuredClone(provider);
-  publicSourceUrl.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ad_free_addon').source.url = 'https://www.amazon.us/prime';
+  publicSourceUrl.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ultra').source.url = 'https://www.amazon.us/prime';
   assert.equal(jsonValidator(publicSourceUrl), false);
 });
 
