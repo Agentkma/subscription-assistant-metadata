@@ -1,4 +1,38 @@
 const supportedRegionEnum = ['US', 'CA', 'UK', 'EU', 'AU', 'GLOBAL'] as const;
+const supportedCurrencyCodes = new Set(Intl.supportedValuesOf('currency'));
+
+export const isSupportedCurrencyCode = (currency: string): boolean => supportedCurrencyCodes.has(currency);
+
+const logoSchema = {
+  type: 'object',
+  required: ['url', 'source'],
+  additionalProperties: false,
+  properties: {
+    url: { type: 'string', format: 'uri', pattern: '^https://' },
+    source: {
+      oneOf: [
+        {
+          type: 'object',
+          required: ['type', 'app_store_id'],
+          additionalProperties: false,
+          properties: {
+            type: { const: 'app_store' },
+            app_store_id: { type: 'string', pattern: '^[0-9]+$' }
+          }
+        },
+        {
+          type: 'object',
+          required: ['type', 'url'],
+          additionalProperties: false,
+          properties: {
+            type: { const: 'official' },
+            url: { type: 'string', format: 'uri', pattern: '^https://' }
+          }
+        }
+      ]
+    }
+  }
+} as const;
 
 const priceTrendSchema = {
   type: 'object',
@@ -55,84 +89,95 @@ const recommendationsSchema = {
   }
 } as const;
 
+const planPriceSchema = {
+  type: 'object',
+  required: ['amount', 'currency'],
+  additionalProperties: false,
+  properties: {
+    amount: { type: 'number', minimum: 0 },
+    currency: { type: 'string', format: 'iso4217', pattern: '^[A-Z]{3}$' }
+  }
+} as const;
+
+const providerPlanSchema = {
+  type: 'object',
+  required: ['plan_id', 'name', 'billing_cycle', 'price'],
+  additionalProperties: false,
+  properties: {
+    plan_id: { type: 'string', minLength: 1 },
+    name: { type: 'string', minLength: 1 },
+    billing_cycle: { type: 'string', enum: ['monthly', 'yearly', 'weekly', 'quarterly'] },
+    price: planPriceSchema,
+    notes: { type: ['string', 'null'] },
+    url_visibility: { type: 'string', enum: ['public', 'account_required', 'unknown'] },
+    access_hint: { type: ['string', 'null'], minLength: 1 },
+    price_trend: priceTrendSchema,
+    source: {
+      type: 'object',
+      required: ['verified_at', 'method'],
+      additionalProperties: false,
+      properties: {
+        url: { type: ['string', 'null'], format: 'uri', pattern: '^https://', minLength: 1 },
+        verified_at: { type: 'string', format: 'date' },
+        method: { type: 'string', enum: ['manual', 'automated'] },
+        evidence: { type: ['string', 'null'], minLength: 1 }
+      },
+      if: { properties: { method: { const: 'automated' } }, required: ['method'] },
+      then: {
+        required: ['url', 'evidence'],
+        properties: {
+          url: { type: 'string', format: 'uri', pattern: '^https://', minLength: 1 },
+          evidence: { type: 'string', minLength: 1 }
+        }
+      }
+    },
+    urls: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        pricing: { type: ['string', 'null'], minLength: 1 },
+        cancellation: { type: ['string', 'null'], minLength: 1 },
+        help_center: { type: ['string', 'null'], minLength: 1 }
+      }
+    }
+  },
+  if: { properties: { url_visibility: { const: 'account_required' } }, required: ['url_visibility'] },
+  then: {
+    required: ['access_hint', 'source'],
+    properties: {
+      access_hint: { type: 'string', minLength: 1 },
+      source: {
+        required: ['method', 'url'],
+        properties: {
+          method: { const: 'manual' },
+          url: { type: 'null' }
+        }
+      }
+    }
+  },
+  else: {
+    required: ['source'],
+    properties: {
+      source: {
+        required: ['url'],
+        properties: {
+          url: { type: 'string', format: 'uri', pattern: '^https://', minLength: 1 }
+        }
+      }
+    }
+  }
+} as const;
+
 const providerMetaSchema = {
   type: 'object',
   required: ['logo', 'plans', 'urls'],
   additionalProperties: false,
   properties: {
-    logo: {
-      type: 'object',
-      required: ['source'],
-      additionalProperties: false,
-      properties: {
-        source: { type: 'string', enum: ['app_store', 'play_store', 'cdn', 'fallback'] },
-        app_store_id: { type: ['string', 'null'] },
-        play_store_package: { type: ['string', 'null'] },
-        cdn_url: { type: ['string', 'null'] },
-        fallback_icon: { type: ['string', 'null'] }
-      }
-    },
+    logo: logoSchema,
     plans: {
       type: 'array',
       minItems: 1,
-      items: {
-        type: 'object',
-        required: ['plan_id', 'name', 'billing_cycle', 'base_price_usd', 'price_last_updated'],
-        additionalProperties: false,
-        properties: {
-          plan_id: { type: 'string', minLength: 1 },
-          name: { type: 'string', minLength: 1 },
-          billing_cycle: { type: 'string', enum: ['monthly', 'yearly', 'weekly', 'quarterly'] },
-          base_price_usd: { type: 'number' },
-          price_last_updated: { type: 'string', minLength: 1 },
-          notes: { type: ['string', 'null'] },
-          url_visibility: { type: 'string', enum: ['public', 'account_required', 'unknown'] },
-          access_hint: { type: ['string', 'null'], minLength: 1 },
-          price_trend: priceTrendSchema,
-          source: {
-            type: 'object',
-            required: ['verified_at', 'method'],
-            additionalProperties: false,
-            properties: {
-              url: { type: ['string', 'null'], minLength: 1 },
-              verified_at: { type: 'string', minLength: 1 },
-              method: { type: 'string', enum: ['manual', 'automated'] },
-              evidence: { type: ['string', 'null'], minLength: 1 }
-            },
-            if: { properties: { method: { const: 'automated' } }, required: ['method'] },
-            then: {
-              required: ['url', 'evidence'],
-              properties: {
-                url: { type: 'string', minLength: 1 },
-                evidence: { type: 'string', minLength: 1 }
-              }
-            }
-          },
-          urls: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              pricing: { type: ['string', 'null'], minLength: 1 },
-              cancellation: { type: ['string', 'null'], minLength: 1 },
-              help_center: { type: ['string', 'null'], minLength: 1 }
-            }
-          }
-        },
-        if: { properties: { url_visibility: { const: 'account_required' } }, required: ['url_visibility'] },
-        then: {
-          required: ['access_hint', 'source'],
-          properties: {
-            access_hint: { type: 'string', minLength: 1 },
-            source: {
-              required: ['method', 'url'],
-              properties: {
-                method: { const: 'manual' },
-                url: { type: 'null' }
-              }
-            }
-          }
-        }
-      }
+      items: providerPlanSchema
     },
     urls: {
       type: 'object',
@@ -198,8 +243,8 @@ export const providerSchema = {
         type: 'object',
         additionalProperties: false,
         properties: {
-          logo: { type: 'object' },
-          plans: { type: 'array' },
+          logo: logoSchema,
+          plans: { type: 'array', minItems: 1, items: providerPlanSchema },
           urls: { type: 'object' },
           intelligence: intelligenceSchema,
           recommendations: recommendationsSchema

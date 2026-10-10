@@ -101,31 +101,39 @@ These category lists are intentionally coverage-oriented and can include a few o
 
 ### Provider logo object
 
-- source
-- app_store_id
-- play_store_package
-- cdn_url
-- fallback_icon
+- `url` (required): resolved HTTPS image URL consumed by the app
+- `source` (required): exactly one provenance/refresh record:
+  - `type: app_store` with a required numeric-string `app_store_id` identifying a verified official listing
+  - `type: official` with a required HTTPS `url` identifying a human-verified official asset or provenance page
+
+Prefer recognizable square app icons from official App Store listings. If no suitable listing exists, manually select an official asset. The three seeds now use resolved App Store artwork URLs and stable listing IDs. Lookup results confirm listing names and publishers; human visual and usage-permission review remains part of seed verification.
+
+The app only loads and caches `logo.url`; a category-icon fallback is app-owned. There is no runtime store lookup or multi-source fallback chain. Regional logo overrides must use the same complete contract.
+
+Initially link directly to official-hosted images. Hosting approved copies can be considered later after checking redistribution permissions; official provenance is not permission to use or redistribute an asset.
+
+Future scripts resolve `app_store` sources through Apple's lookup API using the approved ID and applicable country (the seeds use `US`), then propose updated artwork URLs for review. Non-country region codes require an explicit country mapping before lookup. `official` sources support image health checks but replacement discovery stays manual. These scripts are deferred until the seeds are reviewed.
 
 ### Plan object
 
 - plan_id
 - name
 - billing_cycle
-- base_price_usd
-- price_last_updated
+- price: `amount` and `currency` (three-letter ISO 4217 code)
 - notes (optional)
 - url_visibility (optional): `public` | `account_required` | `unknown`
 - access_hint (optional generally; required and non-empty when `url_visibility` is `account_required`): user-facing guidance, never treated as a public source
 - urls (optional): plan-specific pricing/cancellation/help links; null when account-gated
-- source (optional, required before automation is enabled for a provider):
-  - url: page the price was confirmed on (required and non-empty for automated sources; explicitly null for account-gated plans)
-  - verified_at: last date a human or the pipeline confirmed the value
+- source (required for every plan):
+  - url: HTTPS page the price was confirmed on (required and non-empty for non-account-gated plans; explicitly null for account-gated plans)
+  - verified_at: valid ISO date when a human or the pipeline confirmed the value
   - method: `manual` | `automated`
   - evidence: short quoted snippet from the source page (required and non-empty for `automated`)
 
 Conditional plan rules:
 
+- Non-account-gated plans require a source URL and valid `source.verified_at` date. This is the last date our pipeline or a human verified the current price, not the provider's effective price-change date.
+- Record the price in the currency charged for the plan's region. Do not convert or relabel it as USD; any normalized comparison price must be a separate derived value with its exchange-rate provenance.
 - `source.method: automated` requires a non-empty `source.url` and `source.evidence`.
 - `url_visibility: account_required` requires a non-empty `access_hint` and `source.method: manual` with `source.url: null`.
 
@@ -181,7 +189,6 @@ Conditional plan rules:
   - validators/
   - builders/
   - utils/
-- dist/
   - providers.json
   - version.json
 - .github/workflows/
@@ -220,9 +227,15 @@ A likely output shape:
 - dist/providers.json
 - dist/version.json
 
-This is the file the app consumes at runtime.
+`dist/providers.json` contains current provider/plan records plus their append-only price history. This is the single file the app consumes at runtime; it can derive price trends and other time-based insights from the published observations.
 
 ## Versioning model
+
+### Pre-release contract iteration
+
+The repo is not yet marked ready for its first public release, no versioned bundle has been published, and no downstream consumer contract is active. Schema and provider-data changes during this phase do not require `bundleVersion` or `schemaVersion` increments. When the repo is explicitly marked ready, establish the initial versions and publish the first bundle; that release freezes the initial consumer contract.
+
+After that release, breaking schema changes require a major `schemaVersion` increment and coordination with downstream consumers before publication. Metadata-only updates increment `bundleVersion`. Do not treat pre-release schema iterations as released compatibility changes.
 
 Use a dual-version strategy:
 
@@ -253,8 +266,8 @@ This allows the consuming app to detect both content updates and structural comp
 
 ### Versioning rules
 
-- If metadata content changes, increment bundleVersion
-- If the schema or required field contract changes, increment schemaVersion
+- After initial release, if metadata content changes, increment bundleVersion
+- After initial release, if the schema change is breaking, increment the major schemaVersion and coordinate consumer support; apply the chosen SemVer policy for compatible schema changes
 - Optional release tag: metadata-v1.2.3
 - The app should compare schemaVersion before trusting the bundle shape
 
@@ -268,8 +281,8 @@ This allows the consuming app to detect both content updates and structural comp
 4. Trigger manual workflow dispatch
 5. Validate provider JSON files against the schema
 6. Fetch external metadata for pricing, cancellation, and logo validation as allowed
-7. Compute optional plan-level price trends from public price history
-8. Generate final dist/providers.json
+7. Compute optional plan-level price trends from verified price history
+8. Include current provider records and append-only price history in dist/providers.json
 9. Generate version.json
 10. Publish dist directory to GitHub Pages
 11. Open a PR with the metadata diff for manual review before merge
@@ -283,16 +296,16 @@ This aligns with the app release pattern of shipping a baseline bundle and fetch
 
 ## Automated update strategy
 
-The dataset is kept current by a GitHub Actions pipeline that combines deterministic scripts with a constrained LLM API call. The LLM only extracts; scripts validate; a human approves every change via PR.
+The planned GitHub Actions pipeline will keep the dataset current by combining deterministic scripts with a constrained LLM API call. The LLM only extracts; scripts validate; a human approves every change via PR.
 
-URLs are always human-verified. The LLM never discovers or proposes URLs; it only reads pages at URLs a human has already confirmed.
+Provider and plan source URLs, official logo provenance pages, and App Store listing identities are human-verified. The LLM never discovers or proposes URLs; it only reads pages at URLs a human has already confirmed. Deterministic App Store lookups may propose refreshed `logo.url` values from approved IDs, subject to PR review.
 
 ### Field ownership
 
 | Field type | Fields | Update method |
 | --- | --- | --- |
-| Deterministic | `urls.*` liveness, `logo` (App Store lookup), schema validity, staleness of `source.verified_at` | Script |
-| Human-verified | `urls.*` values (official, pricing, cancellation, help center), `source.url` | Manual, for every provider |
+| Deterministic | Provider URL health, `logo.url` image health, App Store artwork refresh from approved IDs, schema validity, staleness of plan `source.verified_at` | Script; changes require PR review |
+| Human-verified | `urls.*` values (official, pricing, cancellation, help center), plan `source.url`, logo listing identity or official provenance URL, manually selected official image URL | Manual, for every provider |
 | Extracted facts | `plans[]` names, prices, billing cycles, `url_visibility` | LLM API extraction from fetched pages, with evidence |
 | Derived public fact | `plans[].price_trend` | Computed from public price history; omitted until history exists |
 | Curated public insights | `intelligence`, `recommendations` | Draft against a written rubric; human-reviewed before publishing; values are public |
@@ -305,14 +318,15 @@ URLs are always human-verified. The LLM never discovers or proposes URLs; it onl
 3. Script hashes the relevant page content; unchanged pages only get a last-checked update.
 4. For changed pages, an LLM API call receives the page text plus the plan schema and returns structured JSON with a quoted evidence snippet per value.
 5. Scripts validate the output: AJV schema, currency/billing-cycle checks, flag price changes > ~25%, flag removed plans, reject values missing evidence.
-6. Script runs URL liveness checks and App Store logo lookups.
+6. Script checks provider URL availability, redirects, and expected content; fetches and decodes `logo.url` to check usable image content and dimensions; and proposes refreshed App Store artwork URLs from approved IDs. Retry transient errors and report blocked requests separately from broken URLs. HTTP 200 alone is not sufficient.
 7. Pipeline opens a PR with old → new values, evidence, and source URLs. Nothing auto-merges.
 8. On merge: build bundle, publish to GitHub Pages.
 
 ### Guardrails
 
 - Fetched page content is untrusted input (prompt injection risk). The LLM step has no write access or secrets beyond its API key and returns JSON only.
-- The LLM never outputs URLs into provider files; any URL change is a human edit.
+- The LLM never outputs URLs into provider files. Provider/plan URL changes and official-asset replacements are human edits; deterministic artwork refreshes from approved App Store IDs are the only automated URL-change proposals and require review.
+- Verify logo identity and usage permissions during manual intake; a successful image fetch does not establish either. Do not host copies without checking redistribution permissions.
 - Schema validation and PR review are the enforcement layer, not the model.
 - Providers that block automated fetches or have no public pricing page are marked manual-only.
 - Check provider terms of service before automated fetching; prefer official help articles or APIs.
@@ -320,8 +334,9 @@ URLs are always human-verified. The LLM never discovers or proposes URLs; it onl
 
 ### Price history
 
-- Append-only per-plan history (planned: `metadata/history/<provider_id>/<plan_id>.json`) records each merged public price change.
-- Optional `plans[].price_trend` (`trend`, `last_increase`, `increase_percent`) is computed from that history; omit it until enough verified history exists.
+- Append-only per-plan history (planned at `metadata/history/<provider_id>/<plan_id>.json`) will record the initial verified baseline and each subsequently confirmed price change. Each observation will record `price` (`amount` and ISO 4217 `currency`), region, and `observed_at` date when we confirmed it; do not imply this is the provider's effective change date unless the provider states that date.
+- The planned publishing build will include these observations inside the single `dist/providers.json` bundle alongside the current provider/plan records. A scheduled check that finds no price change will update the current plan's `source.verified_at` but will not append a duplicate price-history observation.
+- The app derives price trends and any other time-based intelligence from the published history. Optional `plans[].price_trend` (`trend`, `last_increase`, `increase_percent`) is a precomputed convenience, not a substitute for publishing history; omit it until enough verified history exists.
 
 ### Insight rubric
 
@@ -332,7 +347,7 @@ URLs are always human-verified. The LLM never discovers or proposes URLs; it onl
 
 1. Seed providers: fully verify 2–3 providers by hand that cover different cases (Netflix: static multi-tier; Prime Video: bundle + account-gated add-on; one JS-heavy monthly/yearly page such as Spotify or Disney+). These become the extractor's ground truth.
 2. Local pipeline: fetch → LLM extract → schema/sanity checks → diff against seed files. Tune prompt and rules until seed providers match.
-3. URL intake for remaining providers: human verifies and records `urls.*` and `source.url` for each provider (quick pass, no pricing research).
+3. URL intake for remaining providers: human verifies and records `urls.*`, plan `source.url`, and one official icon source plus resolved `logo.url` for each provider (quick pass, no pricing research).
 4. Automated first pass, one category per PR: pipeline extracts plans/prices from the human-verified URLs with `method: automated` and evidence. Human reviews, corrects, merges. Providers the pipeline can't handle are marked `manual-only`.
 5. Scheduled GitHub Actions job: URL liveness, staleness, page-change detection, and re-extraction on change → PR.
 6. Quarterly LLM-drafted insight/recommendation review against the rubric, with human approval.
@@ -355,7 +370,7 @@ URLs are always human-verified. The LLM never discovers or proposes URLs; it onl
   - unique plan ids
   - category recognition
   - valid regions
-  - allowed logo sources
+  - required HTTPS logo image URL and exactly one supported source record, including regional overrides
 - Add CI validation step
 
 ### Phase 3: External enrichment and public price trend computation

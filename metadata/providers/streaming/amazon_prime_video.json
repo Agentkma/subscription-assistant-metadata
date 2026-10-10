@@ -10,79 +10,85 @@
   "supported": true,
   "default": {
     "logo": {
-      "source": "fallback",
-      "app_store_id": null,
-      "play_store_package": null,
-      "cdn_url": null,
-      "fallback_icon": "amazon_prime_video"
+      "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/36/ae/4c/36ae4c07-4a4d-8870-d7bc-e4329b9fe281/AppIcon-0-0-1x_U007epad-0-1-0-0-85-220.png/512x512bb.jpg",
+      "source": {
+        "type": "app_store",
+        "app_store_id": "545519333"
+      }
     },
     "plans": [
       {
-        "plan_id": "prime_bundle_monthly",
+        "plan_id": "prime_monthly",
         "name": "Amazon Prime (Monthly)",
         "billing_cycle": "monthly",
-        "base_price_usd": 9.99,
-        "price_last_updated": "2026-09-12",
+        "price": {
+          "amount": 14.99,
+          "currency": "USD"
+        },
         "notes": "Prime Video bundled with Amazon Prime membership.",
         "url_visibility": "public",
         "source": {
-          "url": "https://www.amazon.us/prime",
-          "verified_at": "2026-09-12",
+          "url": "https://www.amazon.com/amazonprime",
+          "verified_at": "2026-10-03",
           "method": "manual",
           "evidence": null
         },
         "urls": {
-          "pricing": "https://www.amazon.us/prime",
-          "cancellation": "https://www.amazon.com/gp/help/customer/display.html?nodeId=GZLQX3F4FJQ2K2K4",
-          "help_center": "https://www.primevideo.com/help"
+          "pricing": "https://www.amazon.com/amazonprime",
+          "cancellation": "https://www.primevideo.com/help?nodeId=GWGDSNXVPJ93UW5V",
+          "help_center": "https://www.primevideo.com/region/na/help"
         }
       },
       {
-        "plan_id": "prime_bundle_yearly",
-        "name": "Amazon Prime (Yearly)",
+        "plan_id": "prime_annual",
+        "name": "Amazon Prime (Annual)",
         "billing_cycle": "yearly",
-        "base_price_usd": 99,
-        "price_last_updated": "2026-09-12",
+        "price": {
+          "amount": 139,
+          "currency": "USD"
+        },
         "notes": "Annual Amazon Prime membership that includes Prime Video.",
         "url_visibility": "public",
         "source": {
-          "url": "https://www.amazon.us/prime",
-          "verified_at": "2026-09-12",
+          "url": "https://www.amazon.com/amazonprime",
+          "verified_at": "2026-10-03",
           "method": "manual",
           "evidence": null
         },
         "urls": {
-          "pricing": "https://www.amazon.us/prime",
-          "cancellation": "https://www.amazon.com/gp/help/customer/display.html?nodeId=GZLQX3F4FJQ2K2K4",
-          "help_center": "https://www.primevideo.com/help"
+          "pricing": "https://www.amazon.com/amazonprime",
+          "cancellation": "https://www.primevideo.com/help?nodeId=GWGDSNXVPJ93UW5V",
+          "help_center": "https://www.primevideo.com/region/na/help"
         }
       },
       {
         "plan_id": "prime_video_ultra",
-        "name": "Prime Video Ultra (Ad-Free)",
+        "name": "Prime Video Ultra",
         "billing_cycle": "monthly",
-        "base_price_usd": 4.99,
-        "price_last_updated": "2026-09-12",
+        "price": {
+          "amount": 4.99,
+          "currency": "USD"
+        },
         "notes": "Ad-free upgrade; requires Prime or Prime Video subscription.",
         "url_visibility": "account_required",
-        "access_hint": "Manage this benefit in your Amazon account under Memberships and subscriptions.",
+        "access_hint": "In Prime Video, open Your Account, select Go Ad Free, then select Start Subscription.",
         "source": {
           "url": null,
-          "verified_at": "2026-09-12",
+          "verified_at": "2026-10-03",
           "method": "manual",
           "evidence": null
         },
         "urls": {
           "pricing": null,
-          "cancellation": null,
-          "help_center": null
+          "cancellation": "https://www.primevideo.com/help?nodeId=GWGDSNXVPJ93UW5V",
+          "help_center": "https://www.primevideo.com/help/?nodeId=TD5EYJIUGQMY13QQdi"
         }
       }
     ],
     "urls": {
-      "pricing": "https://www.amazon.us/prime",
-      "cancellation": "https://www.amazon.com/gp/help/customer/display.html?nodeId=GZLQX3F4FJQ2K2K4",
-      "help_center": "https://www.primevideo.com/help"
+      "pricing": "https://www.amazon.com/amazonprime",
+      "cancellation": "https://www.primevideo.com/help?nodeId=GWGDSNXVPJ93UW5V",
+      "help_center": "https://www.primevideo.com/region/na/help"
     }
   },
   "regional_overrides": {

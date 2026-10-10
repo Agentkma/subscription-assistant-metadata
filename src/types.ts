@@ -2,7 +2,9 @@ export type SupportedRegion = 'US' | 'CA' | 'UK' | 'EU' | 'AU' | 'GLOBAL';
 
 export type BillingCycle = 'monthly' | 'yearly' | 'weekly' | 'quarterly';
 
-export type LogoSource = 'app_store' | 'play_store' | 'cdn' | 'fallback';
+export type LogoSource =
+  | { type: 'app_store'; app_store_id: string }
+  | { type: 'official'; url: string };
 
 export type SeasonalPattern =
   | 'winter_release_spike'
@@ -15,11 +17,8 @@ export type SeasonalPattern =
 export type TrendDirection = 'upward' | 'downward' | 'flat';
 
 export interface ProviderLogo {
+  url: string;
   source: LogoSource;
-  app_store_id?: string | null;
-  play_store_package?: string | null;
-  cdn_url?: string | null;
-  fallback_icon?: string | null;
 }
 
 export type UrlVisibility = 'public' | 'account_required' | 'unknown';
@@ -27,11 +26,13 @@ export type UrlVisibility = 'public' | 'account_required' | 'unknown';
 export type SourceMethod = 'manual' | 'automated';
 
 export type ManualPlanSource = {
-  url?: string | null;
+  url: string;
   verified_at: string;
   method: 'manual';
   evidence?: string | null;
 };
+
+export type AccountGatedPlanSource = Omit<ManualPlanSource, 'url'> & { url: null };
 
 export type AutomatedPlanSource = {
   url: string;
@@ -42,12 +43,16 @@ export type AutomatedPlanSource = {
 
 export type PlanSource = ManualPlanSource | AutomatedPlanSource;
 
+export interface PlanPrice {
+  amount: number;
+  currency: string;
+}
+
 interface ProviderPlanBase {
   plan_id: string;
   name: string;
   billing_cycle: BillingCycle;
-  base_price_usd: number;
-  price_last_updated: string;
+  price: PlanPrice;
   notes?: string;
   price_trend?: PriceTrend;
   urls?: ProviderUrls;
@@ -57,12 +62,12 @@ export type ProviderPlan = ProviderPlanBase & (
   | {
       url_visibility: 'account_required';
       access_hint: string;
-      source: ManualPlanSource & { url: null };
+      source: AccountGatedPlanSource;
     }
   | {
       url_visibility?: Exclude<UrlVisibility, 'account_required'>;
       access_hint?: string | null;
-      source?: PlanSource;
+      source: PlanSource;
     }
 );
 

@@ -10,25 +10,78 @@
   "supported": true,
   "default": {
     "logo": {
-      "source": "fallback",
-      "app_store_id": null,
-      "play_store_package": null,
-      "cdn_url": null,
-      "fallback_icon": "spotify"
+      "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/5f/b6/e0/5fb6e0c6-cea6-e107-8d54-8e8fcec573ce/AppIcon-0-0-1x_U007epad-0-1-0-0-sRGB-85-220.png/512x512bb.jpg",
+      "source": {
+        "type": "app_store",
+        "app_store_id": "324684580"
+      }
     },
     "plans": [
       {
-        "plan_id": "standard",
-        "name": "Standard",
+        "plan_id": "individual",
+        "name": "Individual",
         "billing_cycle": "monthly",
-        "base_price_usd": 9.99,
-        "price_last_updated": "2026-09-12"
+        "price": {
+          "amount": 12.99,
+          "currency": "USD"
+        },
+        "source": {
+          "url": "https://www.spotify.com/us/premium/#plans",
+          "verified_at": "2026-10-03",
+          "method": "manual",
+          "evidence": null
+        }
+      },
+      {
+        "plan_id": "duo",
+        "name": "Duo",
+        "billing_cycle": "monthly",
+        "price": {
+          "amount": 18.99,
+          "currency": "USD"
+        },
+        "source": {
+          "url": "https://www.spotify.com/us/premium/#plans",
+          "verified_at": "2026-10-03",
+          "method": "manual",
+          "evidence": null
+        }
+      },
+      {
+        "plan_id": "family",
+        "name": "Family",
+        "billing_cycle": "monthly",
+        "price": {
+          "amount": 21.99,
+          "currency": "USD"
+        },
+        "source": {
+          "url": "https://www.spotify.com/us/premium/#plans",
+          "verified_at": "2026-10-03",
+          "method": "manual",
+          "evidence": null
+        }
+      },
+      {
+        "plan_id": "student",
+        "name": "Student",
+        "billing_cycle": "monthly",
+        "price": {
+          "amount": 6.99,
+          "currency": "USD"
+        },
+        "source": {
+          "url": "https://www.spotify.com/us/premium/#plans",
+          "verified_at": "2026-10-03",
+          "method": "manual",
+          "evidence": null
+        }
       }
     ],
     "urls": {
-      "pricing": "https://example.com/spotify",
-      "cancellation": "https://example.com/spotify/cancel",
-      "help_center": "https://help.example.com/spotify"
+      "pricing": "https://www.spotify.com/us/premium/#plans",
+      "cancellation": "https://support.spotify.com/us/article/how-to-cancel-subscription/",
+      "help_center": "https://support.spotify.com/"
     }
   },
   "regional_overrides": {
