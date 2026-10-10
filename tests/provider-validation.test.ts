@@ -7,6 +7,11 @@ import { providerSchema } from '../src/schema.js';
 import { validateProviderFile, validateProvidersDirectory } from '../src/validateProviders.js';
 // NodeNext + ESM requires the .js extension in the import specifier.
 
+const createJsonValidator = () =>
+  new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true })
+    .addFormat('uri', fullFormats.uri)
+    .addFormat('date', fullFormats.date);
+
 test('validates a known-good provider file', async () => {
   const result = await validateProviderFile('metadata/providers/streaming/netflix.json');
   assert.equal(result.valid, true);
@@ -35,7 +40,7 @@ test('validates the US-only default-plus-region schema', async () => {
 });
 
 test('public contract accepts optional insights, recommendations, and plan trends', async () => {
-  const validate = new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true }).addFormat('uri', fullFormats.uri).compile(providerSchema);
+  const validate = createJsonValidator().compile(providerSchema);
   const raw = await fs.readFile('metadata/providers/streaming/netflix.json', 'utf8');
   const provider = JSON.parse(raw);
 
@@ -63,9 +68,7 @@ test('public contract accepts optional insights, recommendations, and plan trend
 });
 
 test('requires a URL and evidence when plan source method is automated', async () => {
-  const jsonValidator  = new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true });
-  jsonValidator.addFormat('uri', fullFormats.uri);
-  const validate = jsonValidator.compile(providerSchema);
+  const validate = createJsonValidator().compile(providerSchema);
   const raw = await fs.readFile('metadata/providers/streaming/amazon_prime_video.json', 'utf8');
   const provider = JSON.parse(raw);
   const source = provider.default.plans[0].source;
@@ -89,7 +92,7 @@ test('requires a URL and evidence when plan source method is automated', async (
 });
 
 test('requires manual null-URL provenance and an access hint for account-gated plans', async () => {
-  const jsonValidator = new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true }).addFormat('uri', fullFormats.uri).compile(providerSchema);
+  const jsonValidator = createJsonValidator().compile(providerSchema);
   const raw = await fs.readFile('metadata/providers/streaming/amazon_prime_video.json', 'utf8');
   const provider = JSON.parse(raw);
 
@@ -142,8 +145,42 @@ test('records manual source URLs and verification dates for every public seed pl
   }
 });
 
+test('requires source URLs and valid dates for non-gated plans, including regional overrides', async () => {
+  const jsonValidator = createJsonValidator().compile(providerSchema);
+  const provider = JSON.parse(await fs.readFile('metadata/providers/streaming/netflix.json', 'utf8'));
+
+  const missingSource = structuredClone(provider);
+  delete missingSource.default.plans[0].source;
+  assert.equal(jsonValidator(missingSource), false);
+
+  const missingSourceUrl = structuredClone(provider);
+  delete missingSourceUrl.default.plans[0].source.url;
+  assert.equal(jsonValidator(missingSourceUrl), false);
+
+  for (const url of ['http://www.netflix.com/signup', 'not a URL']) {
+    const invalidUrl = structuredClone(provider);
+    invalidUrl.default.plans[0].source.url = url;
+    assert.equal(jsonValidator(invalidUrl), false);
+  }
+
+  for (const dateField of ['price_last_updated', 'source.verified_at']) {
+    const invalidDate = structuredClone(provider);
+    if (dateField === 'price_last_updated') {
+      invalidDate.default.plans[0].price_last_updated = '2026-02-30';
+    } else {
+      invalidDate.default.plans[0].source.verified_at = 'not-a-date';
+    }
+    assert.equal(jsonValidator(invalidDate), false);
+  }
+
+  const invalidRegionalPlan = structuredClone(provider);
+  invalidRegionalPlan.regional_overrides.US.plans = [structuredClone(provider.default.plans[0])];
+  invalidRegionalPlan.regional_overrides.US.plans[0].source.url = 'http://www.netflix.com/signup';
+  assert.equal(jsonValidator(invalidRegionalPlan), false);
+});
+
 test('requires a renderable HTTPS logo URL and exactly one supported source', async () => {
-  const jsonValidator = new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true }).addFormat('uri', fullFormats.uri).compile(providerSchema);
+  const jsonValidator = createJsonValidator().compile(providerSchema);
   const provider = JSON.parse(await fs.readFile('metadata/providers/music_audio/spotify.json', 'utf8'));
 
   assert.equal(jsonValidator(provider), true);

@@ -125,14 +125,15 @@ Future scripts resolve `app_store` sources through Apple's lookup API using the 
 - url_visibility (optional): `public` | `account_required` | `unknown`
 - access_hint (optional generally; required and non-empty when `url_visibility` is `account_required`): user-facing guidance, never treated as a public source
 - urls (optional): plan-specific pricing/cancellation/help links; null when account-gated
-- source (optional, required before automation is enabled for a provider):
-  - url: page the price was confirmed on (required and non-empty for automated sources; explicitly null for account-gated plans)
-  - verified_at: last date a human or the pipeline confirmed the value
+- source (required for every plan):
+  - url: HTTPS page the price was confirmed on (required and non-empty for non-account-gated plans; explicitly null for account-gated plans)
+  - verified_at: valid ISO date when a human or the pipeline confirmed the value
   - method: `manual` | `automated`
   - evidence: short quoted snippet from the source page (required and non-empty for `automated`)
 
 Conditional plan rules:
 
+- Non-account-gated plans require a source URL and valid `price_last_updated` and `source.verified_at` dates.
 - `source.method: automated` requires a non-empty `source.url` and `source.evidence`.
 - `url_visibility: account_required` requires a non-empty `access_hint` and `source.method: manual` with `source.url: null`.
 

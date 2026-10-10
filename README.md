@@ -42,7 +42,7 @@ The published catalog is intentionally partial during the seed and automation tr
 
 The repository uses a JSON Schema contract to define the required shape of each provider record. This is a data contract, not app logic: it enforces required fields, allowed enum values, nested object shapes, and compatibility constraints before metadata is published.
 
-Automated plan provenance requires a non-empty source URL and evidence. Account-gated plans require manual provenance with `source.url: null` and a non-empty `access_hint`.
+Every non-account-gated plan requires a source record with an HTTPS source URL and a valid `verified_at` date. Automated plan provenance additionally requires non-empty evidence. Account-gated plans require manual provenance with `source.url: null` and a non-empty `access_hint`. Plan `price_last_updated` values must also be valid dates.
 
 ### Provider icons
 

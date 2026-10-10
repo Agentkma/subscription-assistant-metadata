@@ -6,6 +6,7 @@ import { providerSchema } from './schema.js';
 
 const jsonValidator = new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true });
 jsonValidator.addFormat('uri', fullFormats.uri);
+jsonValidator.addFormat('date', fullFormats.date);
 const validate = jsonValidator.compile(providerSchema);
 
 const formatValidationError = (error: ErrorObject): string => {

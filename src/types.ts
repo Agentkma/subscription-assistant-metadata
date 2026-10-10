@@ -26,11 +26,13 @@ export type UrlVisibility = 'public' | 'account_required' | 'unknown';
 export type SourceMethod = 'manual' | 'automated';
 
 export type ManualPlanSource = {
-  url?: string | null;
+  url: string;
   verified_at: string;
   method: 'manual';
   evidence?: string | null;
 };
+
+export type AccountGatedPlanSource = Omit<ManualPlanSource, 'url'> & { url: null };
 
 export type AutomatedPlanSource = {
   url: string;
@@ -56,12 +58,12 @@ export type ProviderPlan = ProviderPlanBase & (
   | {
       url_visibility: 'account_required';
       access_hint: string;
-      source: ManualPlanSource & { url: null };
+      source: AccountGatedPlanSource;
     }
   | {
       url_visibility?: Exclude<UrlVisibility, 'account_required'>;
       access_hint?: string | null;
-      source?: PlanSource;
+      source: PlanSource;
     }
 );
 
