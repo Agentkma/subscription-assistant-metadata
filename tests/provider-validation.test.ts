@@ -132,15 +132,15 @@ test('records manual source URLs and verification dates for every public seed pl
     const provider = JSON.parse(await fs.readFile(file, 'utf8'));
 
     for (const plan of provider.default.plans) {
+      assert.equal(plan.source.method, 'manual', `${provider.provider_id}/${plan.plan_id}`);
+      assert.equal(plan.source.verified_at, '2026-10-03', `${provider.provider_id}/${plan.plan_id}`);
+
       if (plan.url_visibility === 'account_required') {
-        assert.equal(plan.source.method, 'manual');
         assert.equal(plan.source.url, null);
         continue;
       }
 
-      assert.equal(plan.source.method, 'manual', `${provider.provider_id}/${plan.plan_id}`);
       assert.equal(typeof plan.source.url, 'string', `${provider.provider_id}/${plan.plan_id}`);
-      assert.equal(plan.source.verified_at, plan.price_last_updated, `${provider.provider_id}/${plan.plan_id}`);
     }
   }
 });

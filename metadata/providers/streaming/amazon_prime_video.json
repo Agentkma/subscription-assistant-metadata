@@ -27,7 +27,7 @@
         "url_visibility": "public",
         "source": {
           "url": "https://www.amazon.com/amazonprime",
-          "verified_at": "2026-09-12",
+          "verified_at": "2026-10-03",
           "method": "manual",
           "evidence": null
         },
@@ -47,7 +47,7 @@
         "url_visibility": "public",
         "source": {
           "url": "https://www.amazon.com/amazonprime",
-          "verified_at": "2026-09-12",
+          "verified_at": "2026-10-03",
           "method": "manual",
           "evidence": null
         },
@@ -68,7 +68,7 @@
         "access_hint": "In Prime Video, open Your Account, select Go Ad Free, then select Start Subscription.",
         "source": {
           "url": null,
-          "verified_at": "2026-09-12",
+          "verified_at": "2026-10-03",
           "method": "manual",
           "evidence": null
         },
