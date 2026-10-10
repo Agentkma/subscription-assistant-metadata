@@ -22,7 +22,6 @@
         "name": "Standard with Ads",
         "billing_cycle": "monthly",
         "base_price_usd": 8.99,
-        "price_last_updated": "2026-03-31",
         "source": {
           "url": "https://www.netflix.com/signup",
           "verified_at": "2026-10-03",
@@ -35,7 +34,6 @@
         "name": "Standard",
         "billing_cycle": "monthly",
         "base_price_usd": 19.99,
-        "price_last_updated": "2026-03-31",
         "source": {
           "url": "https://www.netflix.com/signup",
           "verified_at": "2026-10-03",
@@ -48,7 +46,6 @@
         "name": "Premium",
         "billing_cycle": "monthly",
         "base_price_usd": 26.99,
-        "price_last_updated": "2026-03-31",
         "source": {
           "url": "https://www.netflix.com/signup",
           "verified_at": "2026-10-03",

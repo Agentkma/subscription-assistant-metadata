@@ -22,7 +22,6 @@
         "name": "Individual",
         "billing_cycle": "monthly",
         "base_price_usd": 12.99,
-        "price_last_updated": "2026-09-29",
         "source": {
           "url": "https://www.spotify.com/us/premium/#plans",
           "verified_at": "2026-10-03",
@@ -35,7 +34,6 @@
         "name": "Duo",
         "billing_cycle": "monthly",
         "base_price_usd": 18.99,
-        "price_last_updated": "2026-09-29",
         "source": {
           "url": "https://www.spotify.com/us/premium/#plans",
           "verified_at": "2026-10-03",
@@ -48,7 +46,6 @@
         "name": "Family",
         "billing_cycle": "monthly",
         "base_price_usd": 21.99,
-        "price_last_updated": "2026-09-29",
         "source": {
           "url": "https://www.spotify.com/us/premium/#plans",
           "verified_at": "2026-10-03",
@@ -61,7 +58,6 @@
         "name": "Student",
         "billing_cycle": "monthly",
         "base_price_usd": 6.99,
-        "price_last_updated": "2026-09-29",
         "source": {
           "url": "https://www.spotify.com/us/premium/#plans",
           "verified_at": "2026-10-03",

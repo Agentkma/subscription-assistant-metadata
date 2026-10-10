@@ -48,7 +48,6 @@ interface ProviderPlanBase {
   name: string;
   billing_cycle: BillingCycle;
   base_price_usd: number;
-  price_last_updated: string;
   notes?: string;
   price_trend?: PriceTrend;
   urls?: ProviderUrls;

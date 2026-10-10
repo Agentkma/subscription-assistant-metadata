@@ -33,7 +33,8 @@ The bundle is built around provider metadata for subscription services, includin
 - pricing and billing metadata
 - regional support and plan details
 - official source URLs and verification provenance
-- optional plan-level price trends derived from public price history
+- append-only price history published with the provider bundle for downstream trend analysis
+- optional plan-level price trends derived from that history
 - optional provider insights and recommendations for the app to present
 
 The published catalog is intentionally partial during the seed and automation trial. Insight values and recommendations included in the bundle are public and downloadable. The app's client-side scoring and presentation logic remains outside this repo, but code shipped in a client app should not be treated as confidential.
@@ -42,7 +43,9 @@ The published catalog is intentionally partial during the seed and automation tr
 
 The repository uses a JSON Schema contract to define the required shape of each provider record. This is a data contract, not app logic: it enforces required fields, allowed enum values, nested object shapes, and compatibility constraints before metadata is published.
 
-Every non-account-gated plan requires a source record with an HTTPS source URL and a valid `verified_at` date. Automated plan provenance additionally requires non-empty evidence. Account-gated plans require manual provenance with `source.url: null` and a non-empty `access_hint`. Plan `price_last_updated` values must also be valid dates.
+Every non-account-gated plan requires a source record with an HTTPS source URL and a valid `verified_at` date. This is when we last checked the current price, not when the provider changed it. Automated plan provenance additionally requires non-empty evidence. Account-gated plans require manual provenance with `source.url: null` and a non-empty `access_hint`.
+
+Price changes are intended to be recorded as append-only, dated observations in provider plan history. The planned publishing build will include that history in `dist/providers.json`; the app can use it to derive trends and other time-based insights. History observation dates mean when we verified a value, not the provider's unknown effective price-change date. The current plan's `source.verified_at` is the latest check date; there is no separate `price_last_updated` field. History storage and publication are not implemented yet.
 
 ### Provider icons
 

@@ -22,7 +22,6 @@
         "name": "Amazon Prime (Monthly)",
         "billing_cycle": "monthly",
         "base_price_usd": 14.99,
-        "price_last_updated": "2026-09-12",
         "notes": "Prime Video bundled with Amazon Prime membership.",
         "url_visibility": "public",
         "source": {
@@ -42,7 +41,6 @@
         "name": "Amazon Prime (Annual)",
         "billing_cycle": "yearly",
         "base_price_usd": 139,
-        "price_last_updated": "2026-09-12",
         "notes": "Annual Amazon Prime membership that includes Prime Video.",
         "url_visibility": "public",
         "source": {
@@ -62,7 +60,6 @@
         "name": "Prime Video Ultra",
         "billing_cycle": "monthly",
         "base_price_usd": 4.99,
-        "price_last_updated": "2026-09-12",
         "notes": "Ad-free upgrade; requires Prime or Prime Video subscription.",
         "url_visibility": "account_required",
         "access_hint": "In Prime Video, open Your Account, select Go Ad Free, then select Start Subscription.",

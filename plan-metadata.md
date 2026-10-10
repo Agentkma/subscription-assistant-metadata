@@ -120,7 +120,6 @@ Future scripts resolve `app_store` sources through Apple's lookup API using the 
 - name
 - billing_cycle
 - base_price_usd
-- price_last_updated
 - notes (optional)
 - url_visibility (optional): `public` | `account_required` | `unknown`
 - access_hint (optional generally; required and non-empty when `url_visibility` is `account_required`): user-facing guidance, never treated as a public source
@@ -133,7 +132,7 @@ Future scripts resolve `app_store` sources through Apple's lookup API using the 
 
 Conditional plan rules:
 
-- Non-account-gated plans require a source URL and valid `price_last_updated` and `source.verified_at` dates.
+- Non-account-gated plans require a source URL and valid `source.verified_at` date. This is the last date our pipeline or a human verified the current price, not the provider's effective price-change date.
 - `source.method: automated` requires a non-empty `source.url` and `source.evidence`.
 - `url_visibility: account_required` requires a non-empty `access_hint` and `source.method: manual` with `source.url: null`.
 
@@ -228,7 +227,7 @@ A likely output shape:
 - dist/providers.json
 - dist/version.json
 
-This is the file the app consumes at runtime.
+`dist/providers.json` contains current provider/plan records plus their append-only price history. This is the single file the app consumes at runtime; it can derive price trends and other time-based insights from the published observations.
 
 ## Versioning model
 
@@ -276,8 +275,8 @@ This allows the consuming app to detect both content updates and structural comp
 4. Trigger manual workflow dispatch
 5. Validate provider JSON files against the schema
 6. Fetch external metadata for pricing, cancellation, and logo validation as allowed
-7. Compute optional plan-level price trends from public price history
-8. Generate final dist/providers.json
+7. Compute optional plan-level price trends from verified price history
+8. Include current provider records and append-only price history in dist/providers.json
 9. Generate version.json
 10. Publish dist directory to GitHub Pages
 11. Open a PR with the metadata diff for manual review before merge
@@ -329,8 +328,9 @@ Provider and plan source URLs, official logo provenance pages, and App Store lis
 
 ### Price history
 
-- Append-only per-plan history (planned: `metadata/history/<provider_id>/<plan_id>.json`) records each merged public price change.
-- Optional `plans[].price_trend` (`trend`, `last_increase`, `increase_percent`) is computed from that history; omit it until enough verified history exists.
+- Append-only per-plan history (stored at `metadata/history/<provider_id>/<plan_id>.json`) records the initial verified baseline and each subsequently confirmed price change. Each observation records the price, region, and `observed_at` date when we confirmed it; do not imply this is the provider's effective change date unless the provider states that date.
+- Publish these observations inside the single `dist/providers.json` bundle alongside the current provider/plan records. A scheduled check that finds no price change updates the current plan's `source.verified_at` but does not append a duplicate price-history observation.
+- The app derives price trends and any other time-based intelligence from the published history. Optional `plans[].price_trend` (`trend`, `last_increase`, `increase_percent`) is a precomputed convenience, not a substitute for publishing history; omit it until enough verified history exists.
 
 ### Insight rubric
 

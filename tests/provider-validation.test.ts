@@ -145,7 +145,7 @@ test('records manual source URLs and verification dates for every public seed pl
   }
 });
 
-test('requires source URLs and valid dates for non-gated plans, including regional overrides', async () => {
+test('requires source URLs and valid verification dates for non-gated plans, including regional overrides', async () => {
   const jsonValidator = createJsonValidator().compile(providerSchema);
   const provider = JSON.parse(await fs.readFile('metadata/providers/streaming/netflix.json', 'utf8'));
 
@@ -163,15 +163,13 @@ test('requires source URLs and valid dates for non-gated plans, including region
     assert.equal(jsonValidator(invalidUrl), false);
   }
 
-  for (const dateField of ['price_last_updated', 'source.verified_at']) {
-    const invalidDate = structuredClone(provider);
-    if (dateField === 'price_last_updated') {
-      invalidDate.default.plans[0].price_last_updated = '2026-02-30';
-    } else {
-      invalidDate.default.plans[0].source.verified_at = 'not-a-date';
-    }
-    assert.equal(jsonValidator(invalidDate), false);
-  }
+  const invalidDate = structuredClone(provider);
+  invalidDate.default.plans[0].source.verified_at = 'not-a-date';
+  assert.equal(jsonValidator(invalidDate), false);
+
+  const legacyPriceDate = structuredClone(provider);
+  legacyPriceDate.default.plans[0].price_last_updated = '2026-03-31';
+  assert.equal(jsonValidator(legacyPriceDate), false);
 
   const invalidRegionalPlan = structuredClone(provider);
   invalidRegionalPlan.regional_overrides.US.plans = [structuredClone(provider.default.plans[0])];

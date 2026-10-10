@@ -88,14 +88,13 @@ const recommendationsSchema = {
 
 const providerPlanSchema = {
   type: 'object',
-  required: ['plan_id', 'name', 'billing_cycle', 'base_price_usd', 'price_last_updated'],
+  required: ['plan_id', 'name', 'billing_cycle', 'base_price_usd'],
   additionalProperties: false,
   properties: {
     plan_id: { type: 'string', minLength: 1 },
     name: { type: 'string', minLength: 1 },
     billing_cycle: { type: 'string', enum: ['monthly', 'yearly', 'weekly', 'quarterly'] },
     base_price_usd: { type: 'number', minimum: 0 },
-    price_last_updated: { type: 'string', format: 'date' },
     notes: { type: ['string', 'null'] },
     url_visibility: { type: 'string', enum: ['public', 'account_required', 'unknown'] },
     access_hint: { type: ['string', 'null'], minLength: 1 },
