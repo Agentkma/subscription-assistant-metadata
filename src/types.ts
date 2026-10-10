@@ -43,11 +43,16 @@ export type AutomatedPlanSource = {
 
 export type PlanSource = ManualPlanSource | AutomatedPlanSource;
 
+export interface PlanPrice {
+  amount: number;
+  currency: string;
+}
+
 interface ProviderPlanBase {
   plan_id: string;
   name: string;
   billing_cycle: BillingCycle;
-  base_price_usd: number;
+  price: PlanPrice;
   notes?: string;
   price_trend?: PriceTrend;
   urls?: ProviderUrls;

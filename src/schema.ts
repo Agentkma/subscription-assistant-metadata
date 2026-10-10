@@ -86,15 +86,25 @@ const recommendationsSchema = {
   }
 } as const;
 
+const planPriceSchema = {
+  type: 'object',
+  required: ['amount', 'currency'],
+  additionalProperties: false,
+  properties: {
+    amount: { type: 'number', minimum: 0 },
+    currency: { type: 'string', pattern: '^[A-Z]{3}$' }
+  }
+} as const;
+
 const providerPlanSchema = {
   type: 'object',
-  required: ['plan_id', 'name', 'billing_cycle', 'base_price_usd'],
+  required: ['plan_id', 'name', 'billing_cycle', 'price'],
   additionalProperties: false,
   properties: {
     plan_id: { type: 'string', minLength: 1 },
     name: { type: 'string', minLength: 1 },
     billing_cycle: { type: 'string', enum: ['monthly', 'yearly', 'weekly', 'quarterly'] },
-    base_price_usd: { type: 'number', minimum: 0 },
+    price: planPriceSchema,
     notes: { type: ['string', 'null'] },
     url_visibility: { type: 'string', enum: ['public', 'account_required', 'unknown'] },
     access_hint: { type: ['string', 'null'], minLength: 1 },

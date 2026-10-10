@@ -167,9 +167,23 @@ test('requires source URLs and valid verification dates for non-gated plans, inc
   invalidDate.default.plans[0].source.verified_at = 'not-a-date';
   assert.equal(jsonValidator(invalidDate), false);
 
-  const legacyPriceDate = structuredClone(provider);
-  legacyPriceDate.default.plans[0].price_last_updated = '2026-03-31';
-  assert.equal(jsonValidator(legacyPriceDate), false);
+  const legacyPriceField = structuredClone(provider);
+  legacyPriceField.default.plans[0].base_price_usd = 8.99;
+  assert.equal(jsonValidator(legacyPriceField), false);
+
+  for (const currency of ['usd', 'US', 'USDX']) {
+    const invalidCurrency = structuredClone(provider);
+    invalidCurrency.default.plans[0].price.currency = currency;
+    assert.equal(jsonValidator(invalidCurrency), false);
+  }
+
+  const missingCurrency = structuredClone(provider);
+  delete missingCurrency.default.plans[0].price.currency;
+  assert.equal(jsonValidator(missingCurrency), false);
+
+  const negativePrice = structuredClone(provider);
+  negativePrice.default.plans[0].price.amount = -1;
+  assert.equal(jsonValidator(negativePrice), false);
 
   const invalidRegionalPlan = structuredClone(provider);
   invalidRegionalPlan.regional_overrides.US.plans = [structuredClone(provider.default.plans[0])];

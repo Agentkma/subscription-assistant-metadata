@@ -21,7 +21,10 @@
         "plan_id": "standard_with_ads",
         "name": "Standard with Ads",
         "billing_cycle": "monthly",
-        "base_price_usd": 8.99,
+        "price": {
+          "amount": 8.99,
+          "currency": "USD"
+        },
         "source": {
           "url": "https://www.netflix.com/signup",
           "verified_at": "2026-10-03",
@@ -33,7 +36,10 @@
         "plan_id": "standard",
         "name": "Standard",
         "billing_cycle": "monthly",
-        "base_price_usd": 19.99,
+        "price": {
+          "amount": 19.99,
+          "currency": "USD"
+        },
         "source": {
           "url": "https://www.netflix.com/signup",
           "verified_at": "2026-10-03",
@@ -45,7 +51,10 @@
         "plan_id": "premium",
         "name": "Premium",
         "billing_cycle": "monthly",
-        "base_price_usd": 26.99,
+        "price": {
+          "amount": 26.99,
+          "currency": "USD"
+        },
         "source": {
           "url": "https://www.netflix.com/signup",
           "verified_at": "2026-10-03",

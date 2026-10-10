@@ -30,7 +30,7 @@ The current phase keeps three seed provider records for manual verification and 
 The bundle is built around provider metadata for subscription services, including:
 
 - provider identity and category mapping
-- pricing and billing metadata
+- regional plan prices as `{ amount, currency }` using ISO 4217 currency codes
 - regional support and plan details
 - official source URLs and verification provenance
 - append-only price history published with the provider bundle for downstream trend analysis
@@ -45,7 +45,7 @@ The repository uses a JSON Schema contract to define the required shape of each 
 
 Every non-account-gated plan requires a source record with an HTTPS source URL and a valid `verified_at` date. This is when we last checked the current price, not when the provider changed it. Automated plan provenance additionally requires non-empty evidence. Account-gated plans require manual provenance with `source.url: null` and a non-empty `access_hint`.
 
-Price changes are intended to be recorded as append-only, dated observations in provider plan history. The planned publishing build will include that history in `dist/providers.json`; the app can use it to derive trends and other time-based insights. History observation dates mean when we verified a value, not the provider's unknown effective price-change date. The current plan's `source.verified_at` is the latest check date; there is no separate `price_last_updated` field. History storage and publication are not implemented yet.
+Prices are recorded in the currency charged for the plan's region; they are not implicitly USD. Any normalized comparison price must be a separate derived value with its exchange-rate provenance. Price changes are intended to be recorded as append-only, dated observations in provider plan history. The planned publishing build will include that history in `dist/providers.json`; the app can use it to derive trends and other time-based insights. History observation dates mean when we verified a value, not the provider's unknown effective price-change date. The current plan's `source.verified_at` is the latest check date; there is no separate `price_last_updated` field. History storage and publication are not implemented yet.
 
 ### Provider icons
 

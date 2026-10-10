@@ -119,7 +119,7 @@ Future scripts resolve `app_store` sources through Apple's lookup API using the 
 - plan_id
 - name
 - billing_cycle
-- base_price_usd
+- price: `amount` and `currency` (three-letter ISO 4217 code)
 - notes (optional)
 - url_visibility (optional): `public` | `account_required` | `unknown`
 - access_hint (optional generally; required and non-empty when `url_visibility` is `account_required`): user-facing guidance, never treated as a public source
@@ -133,6 +133,7 @@ Future scripts resolve `app_store` sources through Apple's lookup API using the 
 Conditional plan rules:
 
 - Non-account-gated plans require a source URL and valid `source.verified_at` date. This is the last date our pipeline or a human verified the current price, not the provider's effective price-change date.
+- Record the price in the currency charged for the plan's region. Do not convert or relabel it as USD; any normalized comparison price must be a separate derived value with its exchange-rate provenance.
 - `source.method: automated` requires a non-empty `source.url` and `source.evidence`.
 - `url_visibility: account_required` requires a non-empty `access_hint` and `source.method: manual` with `source.url: null`.
 
@@ -328,7 +329,7 @@ Provider and plan source URLs, official logo provenance pages, and App Store lis
 
 ### Price history
 
-- Append-only per-plan history (stored at `metadata/history/<provider_id>/<plan_id>.json`) records the initial verified baseline and each subsequently confirmed price change. Each observation records the price, region, and `observed_at` date when we confirmed it; do not imply this is the provider's effective change date unless the provider states that date.
+- Append-only per-plan history (stored at `metadata/history/<provider_id>/<plan_id>.json`) records the initial verified baseline and each subsequently confirmed price change. Each observation records `price` (`amount` and ISO 4217 `currency`), region, and `observed_at` date when we confirmed it; do not imply this is the provider's effective change date unless the provider states that date.
 - Publish these observations inside the single `dist/providers.json` bundle alongside the current provider/plan records. A scheduled check that finds no price change updates the current plan's `source.verified_at` but does not append a duplicate price-history observation.
 - The app derives price trends and any other time-based intelligence from the published history. Optional `plans[].price_trend` (`trend`, `last_increase`, `increase_percent`) is a precomputed convenience, not a substitute for publishing history; omit it until enough verified history exists.
 
