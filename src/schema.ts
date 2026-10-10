@@ -1,4 +1,7 @@
 const supportedRegionEnum = ['US', 'CA', 'UK', 'EU', 'AU', 'GLOBAL'] as const;
+const supportedCurrencyCodes = new Set(Intl.supportedValuesOf('currency'));
+
+export const isSupportedCurrencyCode = (currency: string): boolean => supportedCurrencyCodes.has(currency);
 
 const logoSchema = {
   type: 'object',
@@ -92,7 +95,7 @@ const planPriceSchema = {
   additionalProperties: false,
   properties: {
     amount: { type: 'number', minimum: 0 },
-    currency: { type: 'string', pattern: '^[A-Z]{3}$' }
+    currency: { type: 'string', format: 'iso4217', pattern: '^[A-Z]{3}$' }
   }
 } as const;
 

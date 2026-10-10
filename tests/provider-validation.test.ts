@@ -3,14 +3,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Ajv as JsonValidator } from 'ajv';
 import { fullFormats } from 'ajv-formats/dist/formats.js';
-import { providerSchema } from '../src/schema.js';
+import { isSupportedCurrencyCode, providerSchema } from '../src/schema.js';
 import { validateProviderFile, validateProvidersDirectory } from '../src/validateProviders.js';
 // NodeNext + ESM requires the .js extension in the import specifier.
 
 const createJsonValidator = () =>
   new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true })
     .addFormat('uri', fullFormats.uri)
-    .addFormat('date', fullFormats.date);
+    .addFormat('date', fullFormats.date)
+    .addFormat('iso4217', isSupportedCurrencyCode);
 
 test('validates a known-good provider file', async () => {
   const result = await validateProviderFile('metadata/providers/streaming/netflix.json');
@@ -171,11 +172,15 @@ test('requires source URLs and valid verification dates for non-gated plans, inc
   legacyPriceField.default.plans[0].base_price_usd = 8.99;
   assert.equal(jsonValidator(legacyPriceField), false);
 
-  for (const currency of ['usd', 'US', 'USDX']) {
+  for (const currency of ['usd', 'US', 'USDX', 'ZZZ']) {
     const invalidCurrency = structuredClone(provider);
     invalidCurrency.default.plans[0].price.currency = currency;
     assert.equal(jsonValidator(invalidCurrency), false);
   }
+
+  const validCurrency = structuredClone(provider);
+  validCurrency.default.plans[0].price.currency = 'USD';
+  assert.equal(jsonValidator(validCurrency), true);
 
   const missingCurrency = structuredClone(provider);
   delete missingCurrency.default.plans[0].price.currency;
