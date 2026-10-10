@@ -334,8 +334,8 @@ Provider and plan source URLs, official logo provenance pages, and App Store lis
 
 ### Price history
 
-- Append-only per-plan history (stored at `metadata/history/<provider_id>/<plan_id>.json`) records the initial verified baseline and each subsequently confirmed price change. Each observation records `price` (`amount` and ISO 4217 `currency`), region, and `observed_at` date when we confirmed it; do not imply this is the provider's effective change date unless the provider states that date.
-- Publish these observations inside the single `dist/providers.json` bundle alongside the current provider/plan records. A scheduled check that finds no price change updates the current plan's `source.verified_at` but does not append a duplicate price-history observation.
+- Append-only per-plan history (planned at `metadata/history/<provider_id>/<plan_id>.json`) will record the initial verified baseline and each subsequently confirmed price change. Each observation will record `price` (`amount` and ISO 4217 `currency`), region, and `observed_at` date when we confirmed it; do not imply this is the provider's effective change date unless the provider states that date.
+- The planned publishing build will include these observations inside the single `dist/providers.json` bundle alongside the current provider/plan records. A scheduled check that finds no price change will update the current plan's `source.verified_at` but will not append a duplicate price-history observation.
 - The app derives price trends and any other time-based intelligence from the published history. Optional `plans[].price_trend` (`trend`, `last_increase`, `increase_percent`) is a precomputed convenience, not a substitute for publishing history; omit it until enough verified history exists.
 
 ### Insight rubric
