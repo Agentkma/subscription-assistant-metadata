@@ -188,8 +188,7 @@ Conditional plan rules:
   - types/
   - validators/
   - builders/
-  - utils/****
-- dist/
+  - utils/
   - providers.json
   - version.json
 - .github/workflows/
@@ -232,6 +231,12 @@ A likely output shape:
 
 ## Versioning model
 
+### Pre-release contract iteration
+
+The repo is not yet marked ready for its first public release, no versioned bundle has been published, and no downstream consumer contract is active. Schema and provider-data changes during this phase do not require `bundleVersion` or `schemaVersion` increments. When the repo is explicitly marked ready, establish the initial versions and publish the first bundle; that release freezes the initial consumer contract.
+
+After that release, breaking schema changes require a major `schemaVersion` increment and coordination with downstream consumers before publication. Metadata-only updates increment `bundleVersion`. Do not treat pre-release schema iterations as released compatibility changes.
+
 Use a dual-version strategy:
 
 ### bundleVersion
@@ -261,8 +266,8 @@ This allows the consuming app to detect both content updates and structural comp
 
 ### Versioning rules
 
-- If metadata content changes, increment bundleVersion
-- If the schema or required field contract changes, increment schemaVersion
+- After initial release, if metadata content changes, increment bundleVersion
+- After initial release, if the schema change is breaking, increment the major schemaVersion and coordinate consumer support; apply the chosen SemVer policy for compatible schema changes
 - Optional release tag: metadata-v1.2.3
 - The app should compare schemaVersion before trusting the bundle shape
 

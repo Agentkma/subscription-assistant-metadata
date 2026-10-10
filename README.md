@@ -71,19 +71,23 @@ The validation is implemented in TypeScript and runs locally and in CI before pu
 
 ## Publishing and versioning
 
-The project publishes a single bundled JSON artifact and a separate version manifest, for example:
+This repository is still pre-release: no public bundle has been published and no downstream consumer contract is active. During this phase, the schema and seed data may change without version increments.
+
+When the repo is explicitly marked ready for its first public release, establish initial `bundleVersion` and `schemaVersion` values and publish the first bundle. From then on, published versioning rules apply: metadata-only changes increment `bundleVersion`; breaking contract changes require a new major `schemaVersion` and coordination with downstream consumers before release.
+
+The planned publishing flow produces a single bundled JSON artifact and a separate version manifest, for example:
 
 - dist/metadata.bundle.json
 - dist/version.json
 
 These files are served through GitHub Pages and consumed by the private app repository.
 
-The repo uses a dual-version model:
+After the initial release, the repo uses a dual-version model:
 
 - bundleVersion: SemVer for metadata content releases
 - schemaVersion: SemVer for the metadata contract itself
 
-This allows the consumer app to detect both data updates and compatibility-breaking schema changes.
+This allows the consumer app to detect both data updates and compatibility-breaking schema changes. Do not bump versions for pre-release contract iteration before the initial bundle is published.
 
 ## Repo structure
 
