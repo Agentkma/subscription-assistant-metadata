@@ -1,12 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { Ajv, type ErrorObject } from 'ajv';
+import { Ajv as JsonValidator, type ErrorObject } from 'ajv';
 import { fullFormats } from 'ajv-formats/dist/formats.js';
 import { providerSchema } from './schema.js';
 
-const ajv = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true });
-ajv.addFormat('uri', fullFormats.uri);
-const validate = ajv.compile(providerSchema);
+const jsonValidator = new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true });
+jsonValidator.addFormat('uri', fullFormats.uri);
+const validate = jsonValidator.compile(providerSchema);
 
 const formatValidationError = (error: ErrorObject): string => {
   const location = error.instancePath || '/';

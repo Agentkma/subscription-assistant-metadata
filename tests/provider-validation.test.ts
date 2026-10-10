@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Ajv } from 'ajv';
+import { Ajv as JsonValidator } from 'ajv';
 import { fullFormats } from 'ajv-formats/dist/formats.js';
 import { providerSchema } from '../src/schema.js';
 import { validateProviderFile, validateProvidersDirectory } from '../src/validateProviders.js';
@@ -35,7 +35,7 @@ test('validates the US-only default-plus-region schema', async () => {
 });
 
 test('public contract accepts optional insights, recommendations, and plan trends', async () => {
-  const validate = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true }).addFormat('uri', fullFormats.uri).compile(providerSchema);
+  const validate = new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true }).addFormat('uri', fullFormats.uri).compile(providerSchema);
   const raw = await fs.readFile('metadata/providers/streaming/netflix.json', 'utf8');
   const provider = JSON.parse(raw);
 
@@ -63,9 +63,9 @@ test('public contract accepts optional insights, recommendations, and plan trend
 });
 
 test('requires a URL and evidence when plan source method is automated', async () => {
-  const ajv = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true });
-  ajv.addFormat('uri', fullFormats.uri);
-  const validate = ajv.compile(providerSchema);
+  const jsonValidator  = new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true });
+  jsonValidator.addFormat('uri', fullFormats.uri);
+  const validate = jsonValidator.compile(providerSchema);
   const raw = await fs.readFile('metadata/providers/streaming/amazon_prime_video.json', 'utf8');
   const provider = JSON.parse(raw);
   const source = provider.default.plans[0].source;
@@ -89,40 +89,40 @@ test('requires a URL and evidence when plan source method is automated', async (
 });
 
 test('requires manual null-URL provenance and an access hint for account-gated plans', async () => {
-  const validate = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true }).addFormat('uri', fullFormats.uri).compile(providerSchema);
+  const jsonValidator = new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true }).addFormat('uri', fullFormats.uri).compile(providerSchema);
   const raw = await fs.readFile('metadata/providers/streaming/amazon_prime_video.json', 'utf8');
   const provider = JSON.parse(raw);
 
-  assert.equal(validate(provider), true);
+  assert.equal(jsonValidator(provider), true);
 
   const withoutHint = structuredClone(provider);
   delete withoutHint.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ad_free_addon').access_hint;
-  assert.equal(validate(withoutHint), false);
+  assert.equal(jsonValidator(withoutHint), false);
 
   const emptyHint = structuredClone(provider);
   emptyHint.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ad_free_addon').access_hint = '';
-  assert.equal(validate(emptyHint), false);
+  assert.equal(jsonValidator(emptyHint), false);
 
   const automatedSource = structuredClone(provider);
   const automatedPlan = automatedSource.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ad_free_addon');
   automatedPlan.source.method = 'automated';
   automatedPlan.source.evidence = 'Plan details';
-  assert.equal(validate(automatedSource), false);
+  assert.equal(jsonValidator(automatedSource), false);
 
   const missingSourceUrl = structuredClone(provider);
   delete missingSourceUrl.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ad_free_addon').source.url;
-  assert.equal(validate(missingSourceUrl), false);
+  assert.equal(jsonValidator(missingSourceUrl), false);
 
   const publicSourceUrl = structuredClone(provider);
   publicSourceUrl.default.plans.find((plan: { plan_id: string }) => plan.plan_id === 'prime_video_ad_free_addon').source.url = 'https://www.amazon.us/prime';
-  assert.equal(validate(publicSourceUrl), false);
+  assert.equal(jsonValidator(publicSourceUrl), false);
 });
 
 test('requires a renderable HTTPS logo URL and exactly one supported source', async () => {
-  const validate = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true }).addFormat('uri', fullFormats.uri).compile(providerSchema);
+  const jsonValidator = new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true }).addFormat('uri', fullFormats.uri).compile(providerSchema);
   const provider = JSON.parse(await fs.readFile('metadata/providers/music_audio/spotify.json', 'utf8'));
 
-  assert.equal(validate(provider), true);
+  assert.equal(jsonValidator(provider), true);
 
   const invalidLogos = [
     { source: { type: 'app_store', app_store_id: '324684580' } },
@@ -149,18 +149,18 @@ test('requires a renderable HTTPS logo URL and exactly one supported source', as
   for (const logo of invalidLogos) {
     const invalid = structuredClone(provider);
     invalid.default.logo = logo;
-    assert.equal(validate(invalid), false, JSON.stringify(logo));
+    assert.equal(jsonValidator(invalid), false, JSON.stringify(logo));
   }
 
   const official = structuredClone(provider);
   official.default.logo.source = { type: 'official', url: 'https://www.spotify.com' };
-  assert.equal(validate(official), true);
+  assert.equal(jsonValidator(official), true);
 
   const regional = structuredClone(provider);
   regional.regional_overrides.US.logo = structuredClone(provider.default.logo);
-  assert.equal(validate(regional), true);
+  assert.equal(jsonValidator(regional), true);
   regional.regional_overrides.US.logo = { source: 'fallback' };
-  assert.equal(validate(regional), false);
+  assert.equal(jsonValidator(regional), false);
 });
 
 test('contains the canonical MVP category catalog', async () => {

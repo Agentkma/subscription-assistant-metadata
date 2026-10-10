@@ -108,7 +108,7 @@ These category lists are intentionally coverage-oriented and can include a few o
 
 Prefer recognizable square app icons from official App Store listings. If no suitable listing exists, manually select an official asset. The three seeds now use resolved App Store artwork URLs and stable listing IDs. Lookup results confirm listing names and publishers; human visual and usage-permission review remains part of seed verification.
 
-The app only loads and caches `logo.url`; a category-icon fallback is app-owned. There is no runtime store lookup or multi-source fallback chain. Regional logo overrides must use the same complete contract. The old `source` string and top-level `app_store_id`, `play_store_package`, `cdn_url`, and `fallback_icon` fields have been removed. This is a breaking contract change; increment `schemaVersion` when releasing it to consumers.
+The app only loads and caches `logo.url`; a category-icon fallback is app-owned. There is no runtime store lookup or multi-source fallback chain. Regional logo overrides must use the same complete contract.
 
 Initially link directly to official-hosted images. Hosting approved copies can be considered later after checking redistribution permissions; official provenance is not permission to use or redistribute an asset.
 
