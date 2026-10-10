@@ -118,6 +118,30 @@ test('requires manual null-URL provenance and an access hint for account-gated p
   assert.equal(jsonValidator(publicSourceUrl), false);
 });
 
+test('records manual source URLs and verification dates for every public seed plan', async () => {
+  const providers = [
+    'metadata/providers/streaming/netflix.json',
+    'metadata/providers/streaming/amazon_prime_video.json',
+    'metadata/providers/music_audio/spotify.json'
+  ];
+
+  for (const file of providers) {
+    const provider = JSON.parse(await fs.readFile(file, 'utf8'));
+
+    for (const plan of provider.default.plans) {
+      if (plan.url_visibility === 'account_required') {
+        assert.equal(plan.source.method, 'manual');
+        assert.equal(plan.source.url, null);
+        continue;
+      }
+
+      assert.equal(plan.source.method, 'manual', `${provider.provider_id}/${plan.plan_id}`);
+      assert.equal(typeof plan.source.url, 'string', `${provider.provider_id}/${plan.plan_id}`);
+      assert.equal(plan.source.verified_at, plan.price_last_updated, `${provider.provider_id}/${plan.plan_id}`);
+    }
+  }
+});
+
 test('requires a renderable HTTPS logo URL and exactly one supported source', async () => {
   const jsonValidator = new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true }).addFormat('uri', fullFormats.uri).compile(providerSchema);
   const provider = JSON.parse(await fs.readFile('metadata/providers/music_audio/spotify.json', 'utf8'));

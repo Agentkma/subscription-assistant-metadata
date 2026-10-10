@@ -22,26 +22,44 @@
         "name": "Standard with Ads",
         "billing_cycle": "monthly",
         "base_price_usd": 8.99,
-        "price_last_updated": "2026-03-31"
+        "price_last_updated": "2026-03-31",
+        "source": {
+          "url": "https://www.netflix.com/signup",
+          "verified_at": "2026-03-31",
+          "method": "manual",
+          "evidence": null
+        }
       },
       {
         "plan_id": "standard",
         "name": "Standard",
         "billing_cycle": "monthly",
         "base_price_usd": 19.99,
-        "price_last_updated": "2026-03-31"
+        "price_last_updated": "2026-03-31",
+        "source": {
+          "url": "https://www.netflix.com/signup",
+          "verified_at": "2026-03-31",
+          "method": "manual",
+          "evidence": null
+        }
       },
       {
         "plan_id": "premium",
         "name": "Premium",
         "billing_cycle": "monthly",
         "base_price_usd": 26.99,
-        "price_last_updated": "2026-03-31"
+        "price_last_updated": "2026-03-31",
+        "source": {
+          "url": "https://www.netflix.com/signup",
+          "verified_at": "2026-03-31",
+          "method": "manual",
+          "evidence": null
+        }
       }
     ],
     "urls": {
       "pricing": "https://www.netflix.com/signup",
-      "cancellation": "https://www.netflix.com/youraccount",
+      "cancellation": "https://help.netflix.com/en/node/407?q=cancel",
       "help_center": "https://help.netflix.com/"
     }
   },
