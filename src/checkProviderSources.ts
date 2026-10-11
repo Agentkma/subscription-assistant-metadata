@@ -86,7 +86,7 @@ function createSourceCheckRequest(): RequestInit {
   };
 }
 
-async function fetchSourceResponse(url: string, fetcher: typeof fetch): Promise<Response> {
+async function fetchSource(url: string, fetcher: typeof fetch): Promise<Response> {
   return fetcher(url, createSourceCheckRequest());
 }
 
@@ -155,7 +155,7 @@ export async function checkProviderSource(
   fetcher: typeof fetch = fetch
 ): Promise<ProviderSourceCheck> {
   try {
-    const response = await fetchSourceResponse(url, fetcher);
+    const response = await fetchSource(url, fetcher);
     return await classifySourceResponse(response, url, kind);
   } catch (error) {
     const detail = error instanceof Error ? error.message : 'Unknown fetch error';
@@ -197,11 +197,11 @@ function getStatusLabel(status: SourceCheckStatus): string {
   return status === 'ok' ? 'OK' : status === 'blocked' ? 'REVIEW' : 'ERROR';
 }
 
-function printSourceCheck(result: ProviderSourceCheck): void {
+function logSourceCheck(result: ProviderSourceCheck): void {
   console.log(`${getStatusLabel(result.status)} [${result.kind}] ${result.url}: ${result.detail}`);
 }
 
-function printSourceCheckSummary(results: ProviderSourceCheck[]): void {
+function logSourceCheckSummary(results: ProviderSourceCheck[]): void {
   const errors = results.filter((result) => result.status === 'error').length;
   const blocked = results.filter((result) => result.status === 'blocked').length;
   console.log(`Checked ${results.length} source(s): ${errors} error(s), ${blocked} blocked/inconclusive.`);
@@ -214,8 +214,8 @@ function hasSourceErrors(results: ProviderSourceCheck[]): boolean {
 async function main(): Promise<void> {
   const results = await checkProviderSources('metadata/providers');
 
-  results.forEach(printSourceCheck);
-  printSourceCheckSummary(results);
+  results.forEach(logSourceCheck);
+  logSourceCheckSummary(results);
 
   if (hasSourceErrors(results)) {
     process.exitCode = 1;
