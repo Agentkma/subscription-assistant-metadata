@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "validate": "tsx src/validateProviders.ts",
+    "check:sources": "tsx src/checkProviderSources.ts",
     "test": "tsx --test"
   },
   "devDependencies": {
