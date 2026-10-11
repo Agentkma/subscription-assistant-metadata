@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { ProviderDefault, ProviderOverride, ProviderRecord } from './types.js';
-import { validateProvidersDirectory } from './validateProviders.js';
+import type { ProviderDefault, ProviderOverride, ProviderPlan, ProviderRecord } from './types.js';
+import { validateProvidersDirectory, type ProviderValidationResult } from './validateProviders.js';
 
 export type SourceKind = 'page' | 'image';
 export type SourceCheckStatus = 'ok' | 'blocked' | 'error';
@@ -19,7 +19,6 @@ export interface ProviderSource {
 }
 
 type MetadataSection = ProviderDefault | ProviderOverride;
-type SourceCollection = Map<string, ProviderSource>;
 
 const sourceCheckHeaders = {
   range: 'bytes=0-0',
@@ -38,10 +37,8 @@ function isProviderOverride(section: ProviderOverride | undefined): section is P
   return section !== undefined;
 }
 
-function addSource(sources: SourceCollection, url: string | null | undefined, kind: SourceKind): void {
-  if (url) {
-    sources.set(`${kind}:${url}`, { url, kind });
-  }
+function createSource(url: string | null | undefined, kind: SourceKind): ProviderSource[] {
+  return url ? [{ url, kind }] : [];
 }
 
 function getMetadataSections(provider: ProviderRecord): MetadataSection[] {
@@ -51,29 +48,33 @@ function getMetadataSections(provider: ProviderRecord): MetadataSection[] {
   ];
 }
 
-function collectSectionSources(section: MetadataSection, sources: SourceCollection): void {
-  addSource(sources, section.logo?.url, 'image');
-  addSource(sources, section.urls?.official, 'page');
-  addSource(sources, section.urls?.pricing, 'page');
-  addSource(sources, section.urls?.cancellation, 'page');
-  addSource(sources, section.urls?.help_center, 'page');
+function collectPlanSources(plan: ProviderPlan): ProviderSource[] {
+  return [
+    ...createSource(plan.source?.url, 'page'),
+    ...createSource(plan.urls?.pricing, 'page'),
+    ...createSource(plan.urls?.cancellation, 'page'),
+    ...createSource(plan.urls?.help_center, 'page')
+  ];
+}
 
-  for (const plan of section.plans ?? []) {
-    addSource(sources, plan.source?.url, 'page');
-    addSource(sources, plan.urls?.pricing, 'page');
-    addSource(sources, plan.urls?.cancellation, 'page');
-    addSource(sources, plan.urls?.help_center, 'page');
-  }
+function collectSectionSources(section: MetadataSection): ProviderSource[] {
+  return [
+    ...createSource(section.logo?.url, 'image'),
+    ...createSource(section.urls?.official, 'page'),
+    ...createSource(section.urls?.pricing, 'page'),
+    ...createSource(section.urls?.cancellation, 'page'),
+    ...createSource(section.urls?.help_center, 'page'),
+    ...(section.plans ?? []).flatMap(collectPlanSources)
+  ];
 }
 
 export function collectProviderSources(provider: ProviderRecord): ProviderSource[] {
-  const sources: SourceCollection = new Map();
+  const sources = getMetadataSections(provider).flatMap(collectSectionSources);
+  const uniqueSources = new Map(
+    sources.map((source) => [`${source.kind}:${source.url}`, source] as const)
+  );
 
-  for (const section of getMetadataSections(provider)) {
-    collectSectionSources(section, sources);
-  }
-
-  return [...sources.values()];
+  return [...uniqueSources.values()];
 }
 
 function createSourceCheckRequest(): RequestInit {
@@ -162,17 +163,24 @@ export async function checkProviderSource(
   }
 }
 
+function formatInvalidProvider(result: ProviderValidationResult): string {
+  return `${result.file}: ${result.errors.join('; ')}`;
+}
+
 async function loadValidatedProviders(providerDir: string): Promise<ProviderRecord[]> {
   const validations = await validateProvidersDirectory(providerDir);
   const invalidProviders = validations.filter((result) => !result.valid);
 
   if (invalidProviders.length > 0) {
-    throw new Error(invalidProviders.map((result) => `${result.file}: ${result.errors.join('; ')}`).join('\n'));
+    throw new Error(invalidProviders.map(formatInvalidProvider).join('\n'));
   }
 
-  return Promise.all(validations.map(async ({ file }) =>
-    JSON.parse(await fs.readFile(path.resolve(file), 'utf8')) as ProviderRecord
-  ));
+  return Promise.all(validations.map(({ file }) => loadProviderFile(file)));
+}
+
+async function loadProviderFile(file: string): Promise<ProviderRecord> {
+  const contents = await fs.readFile(path.resolve(file), 'utf8');
+  return JSON.parse(contents) as ProviderRecord;
 }
 
 function collectSourcesFromProviders(providers: ProviderRecord[]): ProviderSource[] {

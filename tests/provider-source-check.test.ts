@@ -14,12 +14,14 @@ test('collects configured provider, plan, and logo sources without duplicates', 
   const provider = JSON.parse(
     await fs.readFile('metadata/providers/streaming/amazon_prime_video.json', 'utf8')
   ) as ProviderRecord;
+  const originalProvider = structuredClone(provider);
   const sources = collectProviderSources(provider);
 
   assert.ok(sources.some(({ url, kind }) => url === provider.default.logo.url && kind === 'image'));
   assert.ok(sources.some(({ url, kind }) => url === provider.default.plans[0].source?.url && kind === 'page'));
   assert.equal(new Set(sources.map(({ url, kind }) => `${kind}:${url}`)).size, sources.length);
   assert.equal(sources.some(({ url }) => url === 'https://unused.example'), false);
+  assert.deepEqual(provider, originalProvider);
 });
 
 test('reports a successful HTML page check', async () => {
