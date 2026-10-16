@@ -161,7 +161,7 @@ async function classifySourceResponse(response: Response, url: string, kind: Sou
 
     return createSourceCheckResult(url, kind, 'ok', `HTTP ${response.status}, ${contentType}${redirectDetail}`);
   } finally {
-    await response.body?.cancel();
+    await response.body?.cancel().catch(() => undefined);
   }
 }
 
@@ -186,7 +186,7 @@ export async function checkProviderSource(
     }
 
     if (isRetryableStatus(response.status) && attempt < maxFetchAttempts) {
-      await response.body?.cancel();
+      await response.body?.cancel().catch(() => undefined);
       await waitBeforeRetry(attempt);
       continue;
     }

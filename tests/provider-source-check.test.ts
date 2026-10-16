@@ -81,6 +81,35 @@ test('retries transient fetch failures and retryable HTTP responses', async () =
   assert.equal(responseAttempts, 2);
 });
 
+test('ignores response-body cancellation failures during retries and classification', async () => {
+  let attempts = 0;
+  const result = await checkProviderSource('https://provider.example/pricing', 'page', async (input) => {
+    attempts += 1;
+    const response = mockResponse(attempts === 1 ? 503 : 200, 'text/html', String(input));
+    Object.defineProperty(response, 'body', {
+      value: { cancel: async () => { throw new Error('body stream failed'); } }
+    });
+    return response;
+  });
+
+  assert.equal(result.status, 'ok');
+  assert.equal(attempts, 2);
+
+  let failedAttempts = 0;
+  const failedResult = await checkProviderSource('https://provider.example/pricing', 'page', async (input) => {
+    failedAttempts += 1;
+    const response = mockResponse(503, 'text/html', String(input));
+    Object.defineProperty(response, 'body', {
+      value: { cancel: async () => { throw new Error('body stream failed'); } }
+    });
+    return response;
+  });
+
+  assert.equal(failedResult.status, 'error');
+  assert.match(failedResult.detail, /HTTP 503/);
+  assert.equal(failedAttempts, 3);
+});
+
 test('reports a successful image check only for image content', async () => {
   const imageResult = await checkProviderSource('https://provider.example/logo.png', 'image', async (input) =>
     mockResponse(200, 'image/png', String(input))
