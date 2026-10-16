@@ -69,7 +69,7 @@ The app renders and caches `logo.url`, using its own category icon on failure. S
 
 Planned automation will refresh App Store artwork through Apple's lookup API using the approved ID and the provider's region, check provider URL availability and redirects, and fetch/decode icons to verify their content and dimensions. Retry transient failures and distinguish blocked requests from broken links. HTTP 200 alone is not proof of usable content. Scripts may propose refreshed artwork URLs from approved IDs; the LLM never discovers URLs, and changes require PR review. Official-source replacements remain manual. These network checks are not implemented by the local schema validator yet.
 
-The validation is implemented in TypeScript and runs locally and in CI before publication, which keeps the public bundle consistent and safe for downstream consumers.
+Pull requests run the required project validation workflow: tests, provider schema validation, TypeScript typechecking, and linting. Configure the `Required project validation` check as required in GitHub branch protection or a ruleset to block merges until it passes. The separate `npm run check:sources` workflow remains manual/monthly because it depends on external provider sites; it is not part of this deterministic merge gate.
 
 ## Publishing and versioning
 
