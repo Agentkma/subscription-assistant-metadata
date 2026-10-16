@@ -15,7 +15,7 @@ Build a public metadata repository for SubSage that publishes a single, versione
 
 ## Current implementation focus
 
-The repo is in a seed-first intake phase. Keep Netflix, Amazon Prime Video, and Spotify as the only active provider records while their URLs, plans, and prices are manually verified. Track all remaining provider coverage in `provider-source-checklist.md` without scaffold JSON files. After the seeds are verified, build and test the LLM extraction workflow before activating providers in batches.
+The repo is in a seed-first intake phase. Keep Netflix, Amazon Prime Video, and Spotify as the only active provider records while their URLs, plans, and prices are manually verified. Track all remaining provider coverage in `provider-source-checklist.md` without scaffold JSON files. A read-only source health check is implemented for manual and monthly runs; automated plan extraction and metadata updates remain deferred until seed data is verified.
 
 The active focus is:
 
@@ -23,7 +23,8 @@ The active focus is:
 - define the provider source checklist for every target provider
 - gather official pricing, help, cancellation, and logo sources
 - validate the recorded URLs and metadata against the schema
-- postpone automated workflows until the source data is complete and verified
+- run read-only source health checks against approved URLs without changing provider data
+- postpone automated plan extraction and provider-data updates until the source data is complete and verified
 
 ## Core product context
 
@@ -296,7 +297,9 @@ This aligns with the app release pattern of shipping a baseline bundle and fetch
 
 ## Automated update strategy
 
-The planned GitHub Actions pipeline will keep the dataset current by combining deterministic scripts with a constrained LLM API call. The LLM only extracts; scripts validate; a human approves every change via PR.
+The maintenance workflow is being built in layers. The first layer is implemented as `npm run check:sources` and `.github/workflows/check-provider-sources.yml`: it checks already-recorded page and logo URLs, reports blocked responses for manual review, and fails on definite errors. It is read-only: it does not extract or change provider metadata.
+
+The later extraction layer will keep the dataset current by combining deterministic scripts with a constrained LLM API call. The LLM only extracts; scripts validate; a human approves every proposed change via PR.
 
 Provider and plan source URLs, official logo provenance pages, and App Store listing identities are human-verified. The LLM never discovers or proposes URLs; it only reads pages at URLs a human has already confirmed. Deterministic App Store lookups may propose refreshed `logo.url` values from approved IDs, subject to PR review.
 
@@ -345,12 +348,13 @@ Provider and plan source URLs, official logo provenance pages, and App Store lis
 
 ### Rollout order
 
-1. Seed providers: fully verify 2–3 providers by hand that cover different cases (Netflix: static multi-tier; Prime Video: bundle + account-gated add-on; one JS-heavy monthly/yearly page such as Spotify or Disney+). These become the extractor's ground truth.
-2. Local pipeline: fetch → LLM extract → schema/sanity checks → diff against seed files. Tune prompt and rules until seed providers match.
-3. URL intake for remaining providers: human verifies and records `urls.*`, plan `source.url`, and one official icon source plus resolved `logo.url` for each provider (quick pass, no pricing research).
-4. Automated first pass, one category per PR: pipeline extracts plans/prices from the human-verified URLs with `method: automated` and evidence. Human reviews, corrects, merges. Providers the pipeline can't handle are marked `manual-only`.
-5. Scheduled GitHub Actions job: URL liveness, staleness, page-change detection, and re-extraction on change → PR.
-6. Quarterly LLM-drafted insight/recommendation review against the rubric, with human approval.
+1. Finish manual verification and reviewer sign-off for the three seed providers. Confirm their records and checklist statuses are accurate; these become the ground truth for extraction.
+2. Keep the read-only source health check running manually or monthly. Fix or manually review definite failures; treat blocked responses as inconclusive.
+3. Build the local extraction-and-diff pipeline for seed sources: fetch approved URLs → extract base plan facts → validate against schema and sanity rules → produce a reviewable draft. Tune it until it matches the verified seeds.
+4. Add a GitHub Actions draft workflow that opens a PR for proposed base-plan changes. It must never auto-merge or discover/change source URLs. Keep account-gated plans manual-only.
+5. Intake human-verified URLs and logo sources for remaining providers, then run reviewed first passes by category. Mark unsuitable providers `manual-only`.
+6. Add scheduled change detection and re-extraction only after draft quality and review flow are reliable.
+7. Defer price-trend calculation and LLM-drafted recommendations/intelligence until base-data history and extraction are established; keep all such changes human-reviewed.
 
 ## Starter implementation phases
 
