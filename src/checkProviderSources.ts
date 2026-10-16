@@ -27,6 +27,9 @@ const sourceCheckHeaders = {
 const unauthorizedStatusCode = 401;
 const forbiddenStatusCode = 403;
 const tooManyRequestsStatusCode = 429;
+const requestTimeoutStatusCode = 408;
+const maxFetchAttempts = 3;
+const retryDelayMs = 250;
 const blockedResponseStatusCodes = new Set<number>([
   unauthorizedStatusCode,
   forbiddenStatusCode,
@@ -60,6 +63,7 @@ function collectPlanSources(plan: ProviderPlan): ProviderSource[] {
 function collectSectionSources(section: MetadataSection): ProviderSource[] {
   return [
     ...createSource(section.logo?.url, 'image'),
+    ...(section.logo?.source.type === 'official' ? createSource(section.logo.source.url, 'page') : []),
     ...createSource(section.urls?.official, 'page'),
     ...createSource(section.urls?.pricing, 'page'),
     ...createSource(section.urls?.cancellation, 'page'),
@@ -94,8 +98,18 @@ function getResponseContentType(response: Response): string {
   return response.headers.get('content-type')?.split(';')[0].trim().toLowerCase() ?? '';
 }
 
-function getRedirectDetail(response: Response, requestedUrl: string): string {
-  return response.url && response.url !== requestedUrl ? `; redirected to ${response.url}` : '';
+function getRedirectDetail(response: Response): string {
+  return response.redirected ? `; redirected to ${response.url}` : '';
+}
+
+function isRetryableStatus(status: number): boolean {
+  return status === requestTimeoutStatusCode ||
+    status === tooManyRequestsStatusCode ||
+    status >= 500;
+}
+
+function waitBeforeRetry(attempt: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, retryDelayMs * 2 ** (attempt - 1)));
 }
 
 function getExpectedContentType(kind: SourceKind): string {
@@ -118,7 +132,7 @@ function createSourceCheckResult(
 async function classifySourceResponse(response: Response, url: string, kind: SourceKind): Promise<ProviderSourceCheck> {
   try {
     const contentType = getResponseContentType(response);
-    const redirectDetail = getRedirectDetail(response, url);
+    const redirectDetail = getRedirectDetail(response);
 
     if (blockedResponseStatusCodes.has(response.status)) {
       return createSourceCheckResult(
@@ -154,13 +168,31 @@ export async function checkProviderSource(
   kind: SourceKind,
   fetcher: typeof fetch = fetch
 ): Promise<ProviderSourceCheck> {
-  try {
-    const response = await fetchSource(url, fetcher);
-    return await classifySourceResponse(response, url, kind);
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : 'Unknown fetch error';
-    return createSourceCheckResult(url, kind, 'error', detail);
+  for (let attempt = 1; attempt <= maxFetchAttempts; attempt += 1) {
+    let response: Response;
+
+    try {
+      response = await fetchSource(url, fetcher);
+    } catch (error) {
+      if (attempt < maxFetchAttempts) {
+        await waitBeforeRetry(attempt);
+        continue;
+      }
+
+      const detail = error instanceof Error ? error.message : 'Unknown fetch error';
+      return createSourceCheckResult(url, kind, 'error', detail);
+    }
+
+    if (isRetryableStatus(response.status) && attempt < maxFetchAttempts) {
+      await response.body?.cancel();
+      await waitBeforeRetry(attempt);
+      continue;
+    }
+
+    return classifySourceResponse(response, url, kind);
   }
+
+  throw new Error('Source check exhausted all fetch attempts');
 }
 
 function formatInvalidProvider(result: ProviderValidationResult): string {
@@ -169,6 +201,11 @@ function formatInvalidProvider(result: ProviderValidationResult): string {
 
 async function loadValidatedProviders(providerDir: string): Promise<ProviderRecord[]> {
   const validations = await validateProvidersDirectory(providerDir);
+
+  if (validations.length === 0) {
+    throw new Error(`No provider files found in ${providerDir}`);
+  }
+
   const invalidProviders = validations.filter((result) => !result.valid);
 
   if (invalidProviders.length > 0) {
