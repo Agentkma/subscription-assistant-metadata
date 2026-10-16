@@ -117,7 +117,7 @@ export interface ProviderDefault {
   recommendations?: ProviderRecommendations;
 }
 
-export interface ProviderOverride extends Partial<ProviderDefault> {}
+export type ProviderOverride = Partial<ProviderDefault>;
 
 export interface ProviderRecord {
   version: string;
