@@ -24,16 +24,18 @@ const sourceCheckHeaders = {
   range: 'bytes=0-0',
   'user-agent': 'SubSage-Metadata-Source-Check/1.0'
 };
-const unauthorizedStatusCode = 401;
-const forbiddenStatusCode = 403;
-const tooManyRequestsStatusCode = 429;
-const requestTimeoutStatusCode = 408;
+const httpStatusCode = {
+  unauthorized: 401,
+  forbidden: 403,
+  tooManyRequests: 429,
+  requestTimeout: 408
+} as const;
 const maxFetchAttempts = 3;
 const retryDelayMs = 250;
 const blockedResponseStatusCodes = new Set<number>([
-  unauthorizedStatusCode,
-  forbiddenStatusCode,
-  tooManyRequestsStatusCode
+  httpStatusCode.unauthorized,
+  httpStatusCode.forbidden,
+  httpStatusCode.tooManyRequests
 ]);
 
 function isProviderOverride(section: ProviderOverride | undefined): section is ProviderOverride {
@@ -103,8 +105,8 @@ function getRedirectDetail(response: Response): string {
 }
 
 function isRetryableStatus(status: number): boolean {
-  return status === requestTimeoutStatusCode ||
-    status === tooManyRequestsStatusCode ||
+  return status === httpStatusCode.requestTimeout ||
+    status === httpStatusCode.tooManyRequests ||
     status >= 500;
 }
 
@@ -230,8 +232,14 @@ export async function checkProviderSources(providerDir: string): Promise<Provide
   return Promise.all(sources.map(({ url, kind }) => checkProviderSource(url, kind)));
 }
 
+const sourceCheckStatusLabels: Record<SourceCheckStatus, string> = {
+  ok: 'OK',
+  blocked: 'REVIEW',
+  error: 'ERROR'
+};
+
 function getStatusLabel(status: SourceCheckStatus): string {
-  return status === 'ok' ? 'OK' : status === 'blocked' ? 'REVIEW' : 'ERROR';
+  return sourceCheckStatusLabels[status];
 }
 
 function logSourceCheck(result: ProviderSourceCheck): void {
