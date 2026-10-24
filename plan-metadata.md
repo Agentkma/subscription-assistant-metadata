@@ -348,6 +348,16 @@ Maintenance decision table:
 - The pipeline updates it in the same PR as the related `verified_at` or plan changes, so it adds no separate commits.
 - Without a stored hash, the presence check still catches changed or removed values but cannot detect newly added plans; the first run for each source records its baseline hash.
 
+### Model selection
+
+No model is chosen yet; the seed trial (rollout step 3) selects it. The task is narrow structured extraction at low volume, so cost is negligible and accuracy decides.
+
+- Requirements: JSON-schema structured output, exact copying of names/prices/currencies, verbatim evidence quotes, no tools or browsing.
+- Evaluate 2–3 candidates (at least one small and one larger model) at temperature 0 against the three verified seeds. Score exact match on plan name, price, currency, and billing cycle, plus the verbatim-evidence check.
+- Use the cheapest model that matches every seed exactly. Optionally escalate to the larger model when a small-model result fails validation.
+- Pin an exact model version in pipeline config; never rely on a provider's moving default alias. Re-run the seed evaluation before changing models or versions.
+- Prefer a provider usable from GitHub Actions with minimal secrets (for example GitHub Models via `GITHUB_TOKEN` with `models: read`, if available and permitted by its terms); otherwise store a single provider API key as an Actions secret.
+
 ### Guardrails
 
 - Fetched page content is untrusted input (prompt injection risk). The LLM step has no write access or secrets beyond its API key and returns JSON only.
