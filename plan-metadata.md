@@ -128,7 +128,7 @@ Future scripts resolve `app_store` sources through Apple's lookup API using the 
 - source (required for every plan):
   - url: HTTPS page the price was confirmed on (required and non-empty for non-account-gated plans; explicitly null for account-gated plans)
   - verified_at: valid ISO date when a human or the pipeline confirmed the value
-  - method: `manual` | `automated`
+  - method: `manual` | `automated` — how the value was most recently verified; a script re-confirmation of a manually entered value sets `automated`
   - evidence: short quoted snippet from the source page (required and non-empty for `automated`)
 
 Conditional plan rules:
@@ -301,6 +301,11 @@ The maintenance workflow is being built in layers. The first layer is implemente
 
 The later extraction layer will keep the dataset current by combining deterministic scripts with a constrained LLM API call. The LLM only extracts; scripts validate; a human approves every proposed change via PR.
 
+The extraction layer runs in two modes:
+
+- **Initial extraction** (new providers): the LLM drafts all `plans[]` from human-verified URLs. A human reviews every value before merge. This is how remaining providers are seeded after the pipeline is tuned against the three verified seeds.
+- **Maintenance** (existing providers): a deterministic presence check runs first. The LLM is called only when recorded values are missing from the page or new plan-like content appears.
+
 Provider and plan source URLs, official logo provenance pages, and App Store listing identities are human-verified. The LLM never discovers or proposes URLs; it only reads pages at URLs a human has already confirmed. Deterministic App Store lookups may propose refreshed `logo.url` values from approved IDs, subject to PR review.
 
 ### Field ownership
@@ -309,7 +314,7 @@ Provider and plan source URLs, official logo provenance pages, and App Store lis
 | --- | --- | --- |
 | Deterministic | Provider URL health, `logo.url` image health, App Store artwork refresh from approved IDs, schema validity, staleness of plan `source.verified_at` | Script; changes require PR review |
 | Human-verified | `urls.*` values (official, pricing, cancellation, help center), plan `source.url`, logo listing identity or official provenance URL, manually selected official image URL | Manual, for every provider |
-| Extracted facts | `plans[]` names, prices, billing cycles, `url_visibility` | LLM API extraction from fetched pages, with evidence |
+| Extracted facts | `plans[]` names, prices, billing cycles, `url_visibility` | Initial extraction: LLM API with evidence. Maintenance: deterministic presence check, LLM fallback on mismatch |
 | Derived public fact | `plans[].price_trend` | Computed from public price history; omitted until history exists |
 | Curated public insights | `intelligence`, `recommendations` | Draft against a written rubric; human-reviewed before publishing; values are public |
 | Account-gated | plans with `url_visibility: account_required` | Manual only; flagged when stale |
@@ -318,12 +323,40 @@ Provider and plan source URLs, official logo provenance pages, and App Store lis
 
 1. Scheduled/manual trigger.
 2. Script fetches each provider's `source.url` / `urls.pricing` (Playwright when pages are JS-rendered).
-3. Script hashes the relevant page content; unchanged pages only get a last-checked update.
-4. For changed pages, an LLM API call receives the page text plus the plan schema and returns structured JSON with a quoted evidence snippet per value.
-5. Scripts validate the output: AJV schema, currency/billing-cycle checks, flag price changes > ~25%, flag removed plans, reject values missing evidence.
-6. Script checks provider URL availability, redirects, and expected content; fetches and decodes `logo.url` to check usable image content and dimensions; and proposes refreshed App Store artwork URLs from approved IDs. Retry transient errors and report blocked requests separately from broken URLs. HTTP 200 alone is not sufficient.
-7. Pipeline opens a PR with old → new values, evidence, and source URLs. Nothing auto-merges.
-8. On merge: build bundle, publish to GitHub Pages.
+3. Script normalizes the page to visible text (or the pricing section) and hashes that, not the raw HTML, so tokens, A/B variants, and banners don't register as changes. If the hash matches the last confirmed run, the previous evidence still holds and only `source.verified_at` is refreshed. Hashes are stored as described in "Pipeline state" below.
+4. Maintenance presence check (hash changed or no stored hash): if every recorded plan name and price still appears in the normalized text, the script updates `source.verified_at`, sets `source.method: automated`, and stores the matched snippet as `evidence`. No price-history observation is appended. If a stored hash exists and changed, the LLM still runs (step 5) to look for new plans; with no stored hash yet, the presence check alone is accepted.
+5. Otherwise (a recorded value is missing, the hash changed, or the provider is in initial extraction), an LLM API call receives the page text plus the plan schema and returns structured JSON with a quoted evidence snippet per value. Scripts reject any value whose evidence does not appear verbatim in the fetched text.
+6. Scripts validate the output: AJV schema, currency/billing-cycle checks, flag price changes > ~25%, flag removed plans, reject values missing evidence.
+7. Script checks provider URL availability, redirects, and expected content; fetches and decodes `logo.url` to check usable image content and dimensions; and proposes refreshed App Store artwork URLs from approved IDs. Retry transient errors and report blocked requests separately from broken URLs. HTTP 200 alone is not sufficient.
+8. Pipeline opens a PR with old → new values, evidence, and source URLs. Nothing auto-merges.
+9. On merge: build bundle, publish to GitHub Pages.
+
+Maintenance decision table:
+
+| Content hash | Recorded values present | Action |
+| --- | --- | --- |
+| Unchanged | (check skipped) | Refresh `verified_at` |
+| Changed | Yes | Possible new plan or other change → LLM |
+| Changed | No | Value changed or removed → LLM |
+| No stored hash | Yes | Refresh `verified_at`; record hash |
+| No stored hash | No | LLM |
+
+### Pipeline state
+
+- Content hashes are internal pipeline state, not provider data. They live in a committed `pipeline-state/source-hashes.json`, keyed by provider ID, plan ID, and source URL.
+- The file sits outside `metadata/`, is not validated by the provider schema, and is never included in the published bundle.
+- The pipeline updates it in the same PR as the related `verified_at` or plan changes, so it adds no separate commits.
+- Without a stored hash, the presence check still catches changed or removed values but cannot detect newly added plans; the first run for each source records its baseline hash.
+
+### Model selection
+
+No model is chosen yet; the seed trial (rollout step 3) selects it. The task is narrow structured extraction at low volume, so cost is negligible and accuracy decides.
+
+- Requirements: JSON-schema structured output, exact copying of names/prices/currencies, verbatim evidence quotes, no tools or browsing.
+- Evaluate 2–3 candidates (at least one small and one larger model) at temperature 0 against the three verified seeds. Score exact match on plan name, price, currency, and billing cycle, plus the verbatim-evidence check.
+- Use the cheapest model that matches every seed exactly. Optionally escalate to the larger model when a small-model result fails validation.
+- Pin an exact model version in pipeline config; never rely on a provider's moving default alias. Re-run the seed evaluation before changing models or versions.
+- Prefer a provider usable from GitHub Actions with minimal secrets (for example GitHub Models via `GITHUB_TOKEN` with `models: read`, if available and permitted by its terms); otherwise store a single provider API key as an Actions secret.
 
 ### Guardrails
 
@@ -350,7 +383,7 @@ Provider and plan source URLs, official logo provenance pages, and App Store lis
 
 1. Finish manual verification and reviewer sign-off for the three seed providers. Confirm their records and checklist statuses are accurate; these become the ground truth for extraction.
 2. Keep the read-only source health check running manually or monthly. Fix or manually review definite failures; treat blocked responses as inconclusive.
-3. Build the local extraction-and-diff pipeline for seed sources: fetch approved URLs → extract base plan facts → validate against schema and sanity rules → produce a reviewable draft. Tune it until it matches the verified seeds.
+3. Build the local extraction-and-diff pipeline for seed sources: fetch approved URLs → deterministic presence check → LLM extraction on mismatch or in initial-extraction mode → validate against schema and sanity rules → produce a reviewable draft. Tune initial extraction until it reproduces the verified seeds, and confirm the presence check passes on them without calling the LLM.
 4. Add a GitHub Actions draft workflow that opens a PR for proposed base-plan changes. It must never auto-merge or discover/change source URLs. Keep account-gated plans manual-only.
 5. Intake human-verified URLs and logo sources for remaining providers, then run reviewed first passes by category. Mark unsuitable providers `manual-only`.
 6. Add scheduled change detection and re-extraction only after draft quality and review flow are reliable.

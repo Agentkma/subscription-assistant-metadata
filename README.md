@@ -27,6 +27,8 @@ The current phase keeps three seed provider records for manual verification and 
 
 The first maintenance automation is a read-only source health check. Run `npm run check:sources` locally or dispatch the monthly GitHub Actions workflow. It checks configured page and image URLs, reports access-blocked responses for manual review, and fails on definite errors. It does not extract prices, modify provider records, or publish a bundle.
 
+The planned extraction layer has two modes. Initial extraction uses an LLM to draft plans for new providers from human-verified URLs. Maintenance first checks deterministically that recorded plan names and prices still appear on the page; if they do, it refreshes `source.verified_at` without calling the LLM, which runs only on mismatches. All proposed changes go through PR review. See `plan-metadata.md` for the pipeline.
+
 ## Metadata model
 
 The bundle is built around provider metadata for subscription services, including:
@@ -45,7 +47,7 @@ The published catalog is intentionally partial during the seed and automation tr
 
 The repository uses a JSON Schema contract to define the required shape of each provider record. This is a data contract, not app logic: it enforces required fields, allowed enum values, nested object shapes, and compatibility constraints before metadata is published.
 
-Every non-account-gated plan requires a source record with an HTTPS source URL and a valid `verified_at` date. This is when we last checked the current price, not when the provider changed it. Automated plan provenance additionally requires non-empty evidence. Account-gated plans require manual provenance with `source.url: null` and a non-empty `access_hint`.
+Every non-account-gated plan requires a source record with an HTTPS source URL and a valid `verified_at` date. This is when we last checked the current price, not when the provider changed it. `source.method` records how that latest check was made. Automated plan provenance additionally requires non-empty evidence. Account-gated plans require manual provenance with `source.url: null` and a non-empty `access_hint`.
 
 Prices are recorded in the currency charged for the plan's region; they are not implicitly USD. Any normalized comparison price must be a separate derived value with its exchange-rate provenance. Price changes are intended to be recorded as append-only, dated observations in provider plan history. The planned publishing build will include that history in `dist/providers.json`; the app can use it to derive trends and other time-based insights. History observation dates mean when we verified a value, not the provider's unknown effective price-change date. The current plan's `source.verified_at` is the latest check date; there is no separate `price_last_updated` field. History storage and publication are not implemented yet.
 

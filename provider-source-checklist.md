@@ -16,7 +16,8 @@ This checklist is the roadmap and source-URL tracker for all planned provider co
 - Future deterministic App Store lookups may propose refreshed image URLs from approved listing IDs, with PR review. Official-asset replacements remain manual.
 - Check icon identity, appearance, and usage permissions during intake. Official sourcing does not grant redistribution rights. The app owns category-icon fallback behavior.
 - Seed candidates are verified end to end by hand, including plans and prices, with `method: manual`.
-- After the seed trial, remaining providers receive human-verified URLs before plan/price extraction is attempted. Automated drafts require `method: automated`, evidence quotes, and PR review.
+- After the seed trial, remaining providers receive human-verified URLs before plan/price extraction is attempted. Their first pass uses LLM initial extraction; drafts require `method: automated`, evidence quotes, and PR review.
+- Later re-checks run a deterministic presence check first and call the LLM only on mismatches. A script re-confirmation sets `method: automated` with the matched snippet as evidence.
 - For account-gated plans, use `source.method: manual`, set `source.url` explicitly to null, and provide a non-empty `access_hint`; these stay manual-only.
 - For automated plan data, require a human-verified, non-empty `source.url` and a non-empty evidence quote. Never accept an automated record with a missing or null source URL.
 - Note whether each provider's pricing page is automation-friendly (static HTML) or manual-only (JS-heavy, bot-blocked, or gated).
