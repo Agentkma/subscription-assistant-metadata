@@ -1,4 +1,16 @@
 const supportedRegionEnum = ['US', 'CA', 'UK', 'EU', 'AU', 'GLOBAL'] as const;
+export const supportedCategories = [
+  'streaming',
+  'music_audio',
+  'productivity',
+  'fitness_wellness',
+  'learning',
+  'gaming',
+  'news_reading',
+  'utilities_tools',
+  'lifestyle',
+  'shopping_memberships'
+] as const;
 const supportedCurrencyCodes = new Set(Intl.supportedValuesOf('currency'));
 
 export const isSupportedCurrencyCode = (currency: string): boolean => supportedCurrencyCodes.has(currency);
@@ -99,6 +111,34 @@ const planPriceSchema = {
   }
 } as const;
 
+const nullableHttpsUrlSchema = {
+  type: ['string', 'null'],
+  format: 'uri',
+  pattern: '^https://',
+  minLength: 1
+} as const;
+
+const planUrlsSchema = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    pricing: nullableHttpsUrlSchema,
+    cancellation: nullableHttpsUrlSchema,
+    help_center: nullableHttpsUrlSchema
+  }
+} as const;
+
+const providerUrlsSchema = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    official: nullableHttpsUrlSchema,
+    pricing: nullableHttpsUrlSchema,
+    cancellation: nullableHttpsUrlSchema,
+    help_center: nullableHttpsUrlSchema
+  }
+} as const;
+
 const providerPlanSchema = {
   type: 'object',
   required: ['plan_id', 'name', 'billing_cycle', 'price'],
@@ -117,7 +157,7 @@ const providerPlanSchema = {
       required: ['verified_at', 'method'],
       additionalProperties: false,
       properties: {
-        url: { type: ['string', 'null'], format: 'uri', pattern: '^https://', minLength: 1 },
+        url: nullableHttpsUrlSchema,
         verified_at: { type: 'string', format: 'date' },
         method: { type: 'string', enum: ['manual', 'automated'] },
         evidence: { type: ['string', 'null'], minLength: 1 }
@@ -131,15 +171,7 @@ const providerPlanSchema = {
         }
       }
     },
-    urls: {
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        pricing: { type: ['string', 'null'], minLength: 1 },
-        cancellation: { type: ['string', 'null'], minLength: 1 },
-        help_center: { type: ['string', 'null'], minLength: 1 }
-      }
-    }
+    urls: planUrlsSchema
   },
   if: { properties: { url_visibility: { const: 'account_required' } }, required: ['url_visibility'] },
   then: {
@@ -179,16 +211,7 @@ const providerMetaSchema = {
       minItems: 1,
       items: providerPlanSchema
     },
-    urls: {
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        official: { type: ['string', 'null'], minLength: 1 },
-        pricing: { type: ['string', 'null'], minLength: 1 },
-        cancellation: { type: ['string', 'null'], minLength: 1 },
-        help_center: { type: ['string', 'null'], minLength: 1 }
-      }
-    },
+    urls: providerUrlsSchema,
     intelligence: intelligenceSchema,
     recommendations: recommendationsSchema
   }
@@ -214,18 +237,7 @@ export const providerSchema = {
     name: { type: 'string', minLength: 1 },
     category: {
       type: 'string',
-      enum: [
-        'streaming',
-        'music_audio',
-        'productivity',
-        'fitness_wellness',
-        'learning',
-        'gaming',
-        'news_reading',
-        'utilities_tools',
-        'lifestyle',
-        'shopping_memberships'
-      ]
+      enum: supportedCategories
     },
     default_region: { type: 'string', enum: supportedRegionEnum },
     regions: {
@@ -245,7 +257,7 @@ export const providerSchema = {
         properties: {
           logo: logoSchema,
           plans: { type: 'array', minItems: 1, items: providerPlanSchema },
-          urls: { type: 'object' },
+          urls: providerUrlsSchema,
           intelligence: intelligenceSchema,
           recommendations: recommendationsSchema
         }
