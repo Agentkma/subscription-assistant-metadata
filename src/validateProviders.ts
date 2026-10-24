@@ -145,9 +145,21 @@ export async function validateProvidersDirectory(dirPath: string): Promise<Provi
   const resolvedDir = path.resolve(dirPath);
   const jsonFiles = await listJsonFiles(resolvedDir);
   const results = await Promise.all(
-    jsonFiles.map((file) => {
+    jsonFiles.map(async (file) => {
       const relativeDir = path.dirname(path.relative(resolvedDir, file));
-      const expectedCategory = relativeDir === '.' ? undefined : relativeDir.split(path.sep)[0];
+      const dirSegments = relativeDir === '.' ? [] : relativeDir.split(path.sep);
+
+      if (dirSegments.length !== 1) {
+        return {
+          file,
+          valid: false,
+          errors: [
+            `Provider file must be located directly under a category directory (<category>/<provider_id>.json), found "${path.relative(resolvedDir, file)}"`
+          ]
+        };
+      }
+
+      const [expectedCategory] = dirSegments;
       return validateProviderFile(file, { expectedCategory });
     })
   );

@@ -524,6 +524,20 @@ test('enforces semantic invariants for regions, plan IDs, and file paths', async
     assert.equal(wrongCategoryResult.valid, false);
     assert.match(wrongCategoryResult.errors.join('; '), /must match directory/);
 
+    const rootLevelFile = path.join(tempDir, 'netflix.json');
+    await fs.writeFile(rootLevelFile, JSON.stringify(baseProvider), 'utf8');
+    const nestedFile = path.join(tempDir, 'streaming', 'nested', 'netflix.json');
+    await fs.mkdir(path.dirname(nestedFile), { recursive: true });
+    await fs.writeFile(nestedFile, JSON.stringify(baseProvider), 'utf8');
+    const depthResults = await validateProvidersDirectory(tempDir);
+    for (const badPath of [rootLevelFile, nestedFile]) {
+      const match = depthResults.find((result) => result.file === badPath);
+      assert.equal(match?.valid, false);
+      assert.match(match?.errors.join('; ') ?? '', /directly under a category directory/);
+    }
+    await fs.rm(rootLevelFile);
+    await fs.rm(nestedFile);
+
     await fs.rm(wrongFilename);
     const copyInStreaming = path.join(tempDir, 'streaming', 'netflix.json');
     await fs.writeFile(copyInStreaming, JSON.stringify(baseProvider), 'utf8');

@@ -373,12 +373,12 @@ No model is chosen yet; the seed trial (rollout step 3) selects it. The task is 
 ### Guardrails
 
 - Fetched page content is untrusted input (prompt injection risk). The LLM step has no write access or secrets beyond its API key and returns JSON only.
-- Send region-appropriate `Accept-Language` headers and reject unexpected locale redirects (such as `/ca/` or `/gb/` when checking `US`) so runner IP location does not silently swap currencies or plans-asset replacements are human edits; deterministic artwork refreshes from approved App Store IDs are the only automated URL-change proposals and require review.
+- The LLM never outputs URLs into provider files. Provider/plan URL changes and official-asset replacements are human edits; deterministic artwork refreshes from approved App Store IDs are the only automated URL-change proposals and require review.
 - Verify logo identity and usage permissions during manual intake; a successful image fetch does not establish either. Do not host copies without checking redistribution permissions.
 - Schema validation and PR review are the enforcement layer, not the model.
 - Providers that block automated fetches or have no public pricing page are marked manual-only.
 - Check provider terms of service before automated fetching; prefer official help articles or APIs.
-- Confirm extracted prices are USD/US-region, since runner IP location is not guaranteed.
+- Send region-appropriate `Accept-Language` headers and reject unexpected locale redirects (such as `/ca/` or `/gb/` when checking `US`) so runner IP location does not silently swap currencies or plans.
 
 ### Price history
 
@@ -435,11 +435,11 @@ No model is chosen yet; the seed trial (rollout step 3) selects it. The task is 
 - Merge provider files into a single dist/providers.json artifact
 - Emit version.json with bundleVersion and schemaVersion
 - Run final quality checks before publish
-scheduled/manual extraction workflow that opens a PR with diffs and evidence for human review before merge
+
+### Phase 5: Publishing and review
+
+- Add scheduled/manual extraction workflow that opens a PR with diffs and evidence for human review before merge
 - Add push-to-`main` publish workflow that deterministically builds and publishes `dist/providers.json` and `dist/version.json` to GitHub Pages
-- Add GitHub Actions workflow for monthly, on-demand, and push-triggered runs
-- Publish dist to GitHub Pages
-- Open a PR with diffs for review and manual approval before merge
 
 ### Phase 6: Documentation and maintainability
 
