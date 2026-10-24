@@ -32,11 +32,6 @@
           "verified_at": "2026-10-03",
           "method": "manual",
           "evidence": null
-        },
-        "urls": {
-          "pricing": "https://www.amazon.com/amazonprime",
-          "cancellation": "https://www.primevideo.com/help?nodeId=GWGDSNXVPJ93UW5V",
-          "help_center": "https://www.primevideo.com/region/na/help"
         }
       },
       {
@@ -54,11 +49,6 @@
           "verified_at": "2026-10-03",
           "method": "manual",
           "evidence": null
-        },
-        "urls": {
-          "pricing": "https://www.amazon.com/amazonprime",
-          "cancellation": "https://www.primevideo.com/help?nodeId=GWGDSNXVPJ93UW5V",
-          "help_center": "https://www.primevideo.com/region/na/help"
         }
       },
       {
@@ -77,11 +67,6 @@
           "verified_at": "2026-10-03",
           "method": "manual",
           "evidence": null
-        },
-        "urls": {
-          "pricing": null,
-          "cancellation": "https://www.primevideo.com/help?nodeId=GWGDSNXVPJ93UW5V",
-          "help_center": "https://www.primevideo.com/help/?nodeId=TD5EYJIUGQMY13QQdi"
         }
       }
     ],

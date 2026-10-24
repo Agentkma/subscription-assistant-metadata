@@ -30,16 +30,11 @@ interface ProviderFixture {
         method?: string;
         evidence?: string | null;
       };
-      urls?: {
-        pricing?: string | null;
-        cancellation?: string | null;
-        help_center?: string | null;
-        [key: string]: unknown;
-      };
       url_visibility?: string;
       access_hint?: string | null;
       price: { amount: number; currency: string };
       price_trend?: { trend: string };
+      [key: string]: unknown;
     }>;
     logo: { url?: string | null; source?: unknown; [key: string]: unknown };
     urls: {
@@ -439,7 +434,7 @@ test('contains the canonical MVP category catalog', async () => {
   );
 });
 
-test('validates HTTPS URLs across provider, plan, and regional override URL blocks', async (context) => {
+test('validates HTTPS URLs across provider and regional override URL blocks', async (context) => {
   await runProviderValidationCases(context, 'metadata/providers/streaming/amazon_prime_video.json', [
     {
       name: 'rejects HTTP provider pricing URL',
@@ -456,10 +451,12 @@ test('validates HTTPS URLs across provider, plan, and regional override URL bloc
       }
     },
     {
-      name: 'rejects HTTP plan cancellation URL',
+      name: 'rejects legacy plan-level urls object',
       valid: false,
       mutate: (provider) => {
-        provider.default.plans[0].urls!.cancellation = 'http://www.primevideo.com/help';
+        provider.default.plans[0].urls = {
+          pricing: 'https://www.amazon.com/amazonprime'
+        };
       }
     },
     {

@@ -118,16 +118,6 @@ const nullableHttpsUrlSchema = {
   minLength: 1
 } as const;
 
-const planUrlsSchema = {
-  type: 'object',
-  additionalProperties: false,
-  properties: {
-    pricing: nullableHttpsUrlSchema,
-    cancellation: nullableHttpsUrlSchema,
-    help_center: nullableHttpsUrlSchema
-  }
-} as const;
-
 const providerUrlsSchema = {
   type: 'object',
   additionalProperties: false,
@@ -170,8 +160,7 @@ const providerPlanSchema = {
           evidence: { type: 'string', minLength: 1 }
         }
       }
-    },
-    urls: planUrlsSchema
+    }
   },
   if: { properties: { url_visibility: { const: 'account_required' } }, required: ['url_visibility'] },
   then: {

@@ -54,12 +54,7 @@ function getMetadataSections(provider: ProviderRecord): MetadataSection[] {
 }
 
 function collectPlanSources(plan: ProviderPlan): ProviderSource[] {
-  return [
-    ...createSource(plan.source?.url, 'page'),
-    ...createSource(plan.urls?.pricing, 'page'),
-    ...createSource(plan.urls?.cancellation, 'page'),
-    ...createSource(plan.urls?.help_center, 'page')
-  ];
+  return createSource(plan.source?.url, 'page');
 }
 
 function collectSectionSources(section: MetadataSection): ProviderSource[] {
