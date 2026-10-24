@@ -15,9 +15,9 @@ This checklist is the roadmap and source-URL tracker for all planned provider co
 - Record one resolved HTTPS `logo.url` and one source: `app_store` with the approved listing's `app_store_id`, or `official` with a human-verified HTTPS provenance `url`. Prefer square app icons; do not populate multiple alternative sources.
 - Future deterministic App Store lookups may propose refreshed image URLs from approved listing IDs, with PR review. Official-asset replacements remain manual.
 - Check icon identity, appearance, and usage permissions during intake. Official sourcing does not grant redistribution rights. The app owns category-icon fallback behavior.
-- Seed candidates are verified end to end by hand, including plans and prices, with `method: manual`.
+- Seed candidates are verified end to end by hand, including plans and prices, with `method: manual`. Record standard, non-promotional recurring prices per `billing_cycle` (put intro offers or monthly-equivalent breakdowns of annual plans in `notes`), and include a verbatim `source.evidence` snippet when practical so deterministic maintenance checks have an exact anchor.
 - After the seed trial, remaining providers receive human-verified URLs before plan/price extraction is attempted. Their first pass uses LLM initial extraction; drafts require `method: automated`, evidence quotes, and PR review.
-- Later re-checks run a deterministic presence check first and call the LLM only on mismatches. A script re-confirmation sets `method: automated` with the matched snippet as evidence.
+- Later re-checks run a deterministic presence check first (anchored on `source.evidence` or price + tier keywords) and call the LLM only on mismatches or explicit discovery sweeps, passing existing `plans[]` so `plan_id`s stay stable. A script re-confirmation sets `method: automated` with the matched snippet as evidence.
 - For account-gated plans, use `source.method: manual`, set `source.url` explicitly to null, and provide a non-empty `access_hint`; these stay manual-only.
 - For automated plan data, require a human-verified, non-empty `source.url` and a non-empty evidence quote. Never accept an automated record with a missing or null source URL.
 - Note whether each provider's pricing page is automation-friendly (static HTML) or manual-only (JS-heavy, bot-blocked, or gated).

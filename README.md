@@ -27,7 +27,7 @@ The current phase keeps three seed provider records for manual verification and 
 
 The first maintenance automation is a read-only source health check. Run `npm run check:sources` locally or dispatch the monthly GitHub Actions workflow. It checks configured page and image URLs, reports access-blocked responses for manual review, and fails on definite errors. It does not extract prices, modify provider records, or publish a bundle.
 
-The planned extraction layer has two modes. Initial extraction uses an LLM to draft plans for new providers from human-verified URLs. Maintenance first checks deterministically that recorded plan names and prices still appear on the page; if they do, it refreshes `source.verified_at` without calling the LLM, which runs only on mismatches. All proposed changes go through PR review. See `plan-metadata.md` for the pipeline.
+The planned extraction layer has two modes. Initial extraction uses an LLM to draft plans for new providers from human-verified URLs. Maintenance first checks deterministically whether each recorded plan's verbatim `source.evidence` (or price and tier keywords on a manual seed) still appears on the page; if it does, it refreshes `source.verified_at` and the stored URL hash without calling the LLM, which runs only on mismatches or explicit plan-discovery sweeps. All proposed changes go through PR review. See `plan-metadata.md` for the pipeline.
 
 ## Metadata model
 
