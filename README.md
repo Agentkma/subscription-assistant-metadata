@@ -79,12 +79,12 @@ This repository is still pre-release: no public bundle has been published and no
 
 When the repo is explicitly marked ready for its first public release, establish initial `bundleVersion` and `schemaVersion` values and publish the first bundle. From then on, published versioning rules apply: metadata-only changes increment `bundleVersion`; breaking contract changes require a new major `schemaVersion` and coordination with downstream consumers before release.
 
-The planned publishing flow produces a single bundled JSON artifact and a separate version manifest, for example:
+The planned publishing flow produces a single bundled JSON artifact and a separate version manifest:
 
-- dist/metadata.bundle.json
-- dist/version.json
+- `dist/providers.json`
+- `dist/version.json`
 
-These files are served through GitHub Pages and consumed by the private app repository.
+These files are built deterministically on merge to `main`, served through GitHub Pages, and consumed by the private app repository.
 
 After the initial release, the repo uses a dual-version model:
 
@@ -96,25 +96,40 @@ This allows the consumer app to detect both data updates and compatibility-break
 ## Repo structure
 
 ```text
-src/
-  schema/
-  types/
-  validators/
-  builders/
-  utils/
-
-data/
+metadata/
   categories.json
-  subscriptions.json
+  providers/
+    <category>/
+      <provider_id>.json
+  history/                  (planned)
+    <provider_id>/
+      <plan_id>.json
 
-dist/
-  metadata.bundle.json
+pipeline-state/             (planned, internal only)
+  source-hashes.json
+
+src/
+  schema.ts
+  types.ts
+  validateProviders.ts
+  checkProviderSources.ts
+
+tests/
+  provider-validation.test.ts
+  provider-source-check.test.ts
+
+dist/                       (planned build output)
+  providers.json
   version.json
 
 .github/workflows/
-  publish-metadata.yml
+  validate.yml
+  check-provider-sources.yml
+  publish-metadata.yml      (planned)
 
 README.md
+plan-metadata.md
+provider-source-checklist.md
 package.json
 tsconfig.json
 ```

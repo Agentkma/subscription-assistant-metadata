@@ -176,27 +176,32 @@ Conditional plan rules:
 
 ### Repo layout
 
-- metadata/
-  - providers/
-    - netflix.json
-    - spotify.json
-    - ...
-  - categories.json
-  - schema/
-    - provider-schema.json
-- src/
-  - schema/
-  - types/
-  - validators/
-  - builders/
-  - utils/
-  - providers.json
-  - version.json
-- .github/workflows/
-  - publish-metadata.yml
-- package.json
-- tsconfig.json
-- README.md
+- `metadata/`
+  - `categories.json`
+  - `providers/<category>/<provider_id>.json` (for example `streaming/netflix.json`, `music_audio/spotify.json`)
+  - `history/<provider_id>/<plan_id>.json` (planned)
+- `pipeline-state/` (planned, internal only)
+  - `source-hashes.json`
+- `src/`
+  - `schema.ts`
+  - `types.ts`
+  - `validateProviders.ts`
+  - `checkProviderSources.ts`
+- `tests/`
+  - `provider-validation.test.ts`
+  - `provider-source-check.test.ts`
+- `dist/` (planned build output)
+  - `providers.json`
+  - `version.json`
+- `.github/workflows/`
+  - `validate.yml`
+  - `check-provider-sources.yml`
+  - `publish-metadata.yml` (planned)
+- `package.json`
+- `tsconfig.json`
+- `README.md`
+- `plan-metadata.md`
+- `provider-source-checklist.md`
 
 ### Build approach
 
@@ -274,24 +279,27 @@ This allows the consuming app to detect both content updates and structural comp
 
 ## Publishing flow
 
-### GitHub Actions pipeline
+ GitHub Actions are split by responsibility so external site checks never run inside the deterministic merge gate or publish build:
 
-1. Trigger on push to main
-2. Trigger on metadata changes
-3. Trigger monthly on the first of the month at 00:00 UTC
-4. Trigger manual workflow dispatch
-5. Validate provider JSON files against the schema
-6. Fetch external metadata for pricing, cancellation, and logo validation as allowed
-7. Compute optional plan-level price trends from verified price history
-8. Include current provider records and append-only price history in dist/providers.json
-9. Generate version.json
-10. Publish dist directory to GitHub Pages
-11. Open a PR with the metadata diff for manual review before merge
+1. **PR validation workflow (`validate.yml`):**
+   - Triggers on pull requests and merge groups targeting `main`
+   - Runs tests, provider schema and semantic validation, TypeScript typechecking, and linting
+2. **Maintenance & extraction PR workflow (planned evolution of `check-provider-sources.yml`):**
+   - Triggers monthly (first of the month) or via manual `workflow_dispatch`
+   - Fetches external pricing, cancellation, and logo URLs
+   - Runs deterministic presence checks (or LLM extraction on mismatch / initial extraction) and updates `pipeline-state/source-hashes.json`
+   - Opens a PR with the metadata diff and evidence for human review; never auto-merges or publishes
+3. **Publish workflow (`publish-metadata.yml`, planned):**
+   - Triggers on push to `main` (when a reviewed PR merges) or manual dispatch
+   - Runs deterministic validation against committed files only (no external scraping)
+   - Computes optional plan-level price trends from committed price history
+   - Builds `dist/providers.json` (current provider records + append-only price history) and `dist/version.json`
+   - Publishes `dist/` to GitHub Pages
 
 ### Output contract
 
-- dist/providers.json
-- dist/version.json
+- `dist/providers.json`
+- `dist/version.json`
 
 This aligns with the app release pattern of shipping a baseline bundle and fetching the latest metadata on app launch when online.
 
@@ -428,9 +436,8 @@ No model is chosen yet; the seed trial (rollout step 3) selects it. The task is 
 - Merge provider files into a single dist/providers.json artifact
 - Emit version.json with bundleVersion and schemaVersion
 - Run final quality checks before publish
-
-### Phase 5: Publishing and review
-
+scheduled/manual extraction workflow that opens a PR with diffs and evidence for human review before merge
+- Add push-to-`main` publish workflow that deterministically builds and publishes `dist/providers.json` and `dist/version.json` to GitHub Pages
 - Add GitHub Actions workflow for monthly, on-demand, and push-triggered runs
 - Publish dist to GitHub Pages
 - Open a PR with diffs for review and manual approval before merge
