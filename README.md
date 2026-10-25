@@ -71,13 +71,13 @@ The app renders and caches `logo.url`, using its own category icon on failure. S
 
 Planned automation will check provider URL availability and redirects, fetch/decode icons to verify their content and dimensions, and refresh App Store artwork through Apple's lookup API using the approved ID and the provider's region only when a recorded `logo.url` fails health checks (or during an explicit icon refresh) so working icon URLs do not churn on every app version bump. Retry transient failures and distinguish blocked requests from broken links. HTTP 200 alone is not proof of usable content. Scripts may propose refreshed artwork URLs from approved IDs; the LLM never discovers URLs, and changes require PR review. Official-source replacements remain manual. These network checks are not implemented by the local schema validator yet.
 
-Pull requests run the required project validation workflow: tests, provider schema validation, TypeScript typechecking, and linting. Configure the `Required project validation` check as required in GitHub branch protection or a ruleset to block merges until it passes. The separate `npm run check:sources` workflow remains manual/monthly because it depends on external provider sites; it is not part of this deterministic merge gate.
+Pull requests run the required project validation workflow: tests, provider schema validation, the bundle build (`npm run build`, which writes `dist/providers.json` and `dist/version.json`), TypeScript typechecking, and linting. Configure the `Required project validation` check as required in GitHub branch protection or a ruleset to block merges until it passes. The separate `npm run check:sources` workflow remains manual/monthly because it depends on external provider sites; it is not part of this deterministic merge gate.
 
 ## Publishing and versioning
 
-This repository is still pre-release: no public bundle has been published and no downstream consumer contract is active. During this phase, the schema and seed data may change without version increments.
+This repository is still pre-release: no public bundle has been published and no downstream consumer contract is active. During this phase, bundles carry `0.x` versions (currently `bundleVersion` and `schemaVersion` `0.1.0`, per SemVer's unstable-API convention), and the schema and seed data may change without version increments.
 
-When the repo is explicitly marked ready for its first public release, establish initial `bundleVersion` and `schemaVersion` values and publish the first bundle. From then on, published versioning rules apply: metadata-only changes increment `bundleVersion`; breaking contract changes require a new major `schemaVersion` and coordination with downstream consumers before release.
+When the repo is explicitly marked ready for its first public release, set `bundleVersion` and `schemaVersion` to `1.0.0` and publish the first bundle. From then on, published versioning rules apply: metadata-only changes increment `bundleVersion`; breaking contract changes require a new major `schemaVersion` and coordination with downstream consumers before release.
 
 The planned publishing flow produces a single bundled JSON artifact and a separate version manifest:
 
@@ -91,7 +91,7 @@ After the initial release, the repo uses a dual-version model:
 - bundleVersion: SemVer for metadata content releases
 - schemaVersion: SemVer for the metadata contract itself
 
-This allows the consumer app to detect both data updates and compatibility-breaking schema changes. Do not bump versions for pre-release contract iteration before the initial bundle is published.
+This allows the consumer app to detect both data updates and compatibility-breaking schema changes. Do not bump the `0.x` versions for pre-release contract iteration before the initial `1.0.0` bundle is published.
 
 ## Repo structure
 
