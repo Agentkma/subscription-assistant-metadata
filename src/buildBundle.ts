@@ -9,10 +9,11 @@ import type {
   ProvidersBundle,
   VersionManifest
 } from './types.js';
-import { validateProvidersDirectory } from './validateProviders.js';
+import { type ProviderValidationResult, validateProvidersDirectory } from './validateProviders.js';
 
 export const BUNDLE_VERSION = '0.1.0';
 export const SCHEMA_VERSION = '0.1.0';
+const TEXT_ENCODING = 'utf8';
 
 export interface BuildBundleOptions {
   providersDir?: string;
@@ -27,27 +28,39 @@ export interface BuildBundleResult {
   version: VersionManifest;
 }
 
+function formatInvalidProviderResults(invalidResults: ProviderValidationResult[]): string {
+  return invalidResults
+    .map((result) => `${result.file}\n${result.errors.map((error) => `  - ${error}`).join('\n')}`)
+    .join('\n');
+}
+
+async function readProviderFile(file: string): Promise<ProviderRecord> {
+  return JSON.parse(await fs.readFile(file, TEXT_ENCODING)) as ProviderRecord;
+}
+
+// Code-point ordering keeps output identical regardless of the build machine's locale.
+function compareByProviderId(a: ProviderRecord, b: ProviderRecord): number {
+  if (a.provider_id < b.provider_id) {
+    return -1;
+  }
+  return a.provider_id > b.provider_id ? 1 : 0;
+}
+
 async function loadValidProviders(providersDir: string): Promise<ProviderRecord[]> {
   const results = await validateProvidersDirectory(providersDir);
   const invalidResults = results.filter((result) => !result.valid);
 
   if (invalidResults.length > 0) {
-    const details = invalidResults
-      .map((result) => `${result.file}\n${result.errors.map((error) => `  - ${error}`).join('\n')}`)
-      .join('\n');
-    throw new Error(`Invalid provider file(s):\n${details}`);
+    throw new Error(`Invalid provider file(s):\n${formatInvalidProviderResults(invalidResults)}`);
   }
 
   if (results.length === 0) {
     throw new Error(`No provider files found in ${providersDir}`);
   }
 
-  const providers = await Promise.all(
-    results.map(async (result) => JSON.parse(await fs.readFile(result.file, 'utf8')) as ProviderRecord)
-  );
+  const providers = await Promise.all(results.map((result) => readProviderFile(result.file)));
 
-  // Code-point ordering keeps output identical regardless of the build machine's locale.
-  return providers.sort((a, b) => (a.provider_id < b.provider_id ? -1 : a.provider_id > b.provider_id ? 1 : 0));
+  return providers.sort(compareByProviderId);
 }
 
 function isCategoryDefinition(value: unknown): value is CategoryDefinition {
@@ -62,13 +75,13 @@ function isCategoryDefinition(value: unknown): value is CategoryDefinition {
 }
 
 async function loadCategories(categoriesFile: string): Promise<CategoryDefinition[]> {
-  const parsed: unknown = JSON.parse(await fs.readFile(categoriesFile, 'utf8'));
+  const categories: unknown = JSON.parse(await fs.readFile(categoriesFile, TEXT_ENCODING));
 
-  if (!Array.isArray(parsed) || !parsed.every(isCategoryDefinition)) {
+  if (!Array.isArray(categories) || !categories.every(isCategoryDefinition)) {
     throw new Error(`${categoriesFile} must be an array of { id, name, display_name } records`);
   }
 
-  const ids = parsed.map((category) => category.id);
+  const ids = categories.map((category) => category.id);
   const supported = new Set<string>(supportedCategories);
   const unknownIds = ids.filter((id) => !supported.has(id));
   const missingIds = supportedCategories.filter((id) => !ids.includes(id));
@@ -81,7 +94,7 @@ async function loadCategories(categoriesFile: string): Promise<CategoryDefinitio
     );
   }
 
-  return parsed;
+  return categories;
 }
 
 // provider_count is derived at build time; categories.json does not store it.
@@ -100,7 +113,7 @@ function resolveGitSha(): string {
   }
 
   try {
-    return execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    return execFileSync('git', ['rev-parse', 'HEAD'], { encoding: TEXT_ENCODING }).trim();
   } catch {
     return 'unknown';
   }
@@ -133,8 +146,8 @@ export async function buildBundle(options: BuildBundleOptions = {}): Promise<Bui
   };
 
   await fs.mkdir(outDir, { recursive: true });
-  await fs.writeFile(path.join(outDir, 'providers.json'), toJsonFile(bundle), 'utf8');
-  await fs.writeFile(path.join(outDir, 'version.json'), toJsonFile(version), 'utf8');
+  await fs.writeFile(path.join(outDir, 'providers.json'), toJsonFile(bundle), TEXT_ENCODING);
+  await fs.writeFile(path.join(outDir, 'version.json'), toJsonFile(version), TEXT_ENCODING);
 
   return { bundle, version };
 }
