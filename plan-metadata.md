@@ -57,7 +57,7 @@ The public repo will use a provider-first metadata design. Each provider represe
 Each provider record should include:
 
 - version
-- provider_id
+- providerId
 - name
 - category
 - regions[]
@@ -104,7 +104,7 @@ These category lists are intentionally coverage-oriented and can include a few o
 
 - `url` (required): resolved HTTPS image URL consumed by the app
 - `source` (required): exactly one provenance/refresh record:
-  - `type: app_store` with a required numeric-string `app_store_id` identifying a verified official listing
+  - `type: app_store` with a required numeric-string `appStoreId` identifying a verified official listing
   - `type: official` with a required HTTPS `url` identifying a human-verified official asset or provenance page
 
 Prefer recognizable square app icons from official App Store listings. If no suitable listing exists, manually select an official asset. The three seeds now use resolved App Store artwork URLs and stable listing IDs. Lookup results confirm listing names and publishers; human visual and usage-permission review remains part of seed verification.
@@ -117,50 +117,50 @@ Future scripts resolve `app_store` sources through Apple's lookup API using the 
 
 ### Plan object
 
-- plan_id: stable identifier within the provider; preserved across price updates so append-only price history stays linked
+- planId: stable identifier within the provider; preserved across price updates so append-only price history stays linked
 - name: normalized display name for the app UI (may differ from verbatim marketing copy on the page)
-- billing_cycle
-- price: `amount` and `currency` (three-letter ISO 4217 code). Always record the standard, non-promotional recurring charge billed per `billing_cycle` (for example, the full annual charge for `yearly` or the post-trial recurring charge for `monthly`), never introductory promo rates or monthly-equivalent breakdowns of annual plans
+- billingCycle
+- price: `amount` and `currency` (three-letter ISO 4217 code). Always record the standard, non-promotional recurring charge billed per `billingCycle` (for example, the full annual charge for `yearly` or the post-trial recurring charge for `monthly`), never introductory promo rates or monthly-equivalent breakdowns of annual plans
 - notes (optional): use for introductory offers, bundle caveats, or monthly-equivalent breakdowns
-- url_visibility (optional): `public` | `account_required` | `unknown`
-- access_hint (optional generally; required and non-empty when `url_visibility` is `account_required`): user-facing guidance, never treated as a public source
+- urlVisibility (optional): `public` | `account_required` | `unknown`
+- accessHint (optional generally; required and non-empty when `urlVisibility` is `account_required`): user-facing guidance, never treated as a public source
 - source (required for every plan):
   - url: HTTPS page the price was confirmed on (required and non-empty for non-account-gated plans; explicitly null for account-gated plans)
-  - verified_at: valid ISO date when a human or the pipeline confirmed the value
+  - verifiedAt: valid ISO date when a human or the pipeline confirmed the value
   - method: `manual` | `automated` — how the value was most recently verified; a script re-confirmation of a manually entered value sets `automated`
   - evidence: short verbatim snippet from the source page confirming the plan and price (required and non-empty for `automated`; also serves as the anchor for deterministic maintenance checks)
 
 Conditional plan rules:
 
-- Non-account-gated plans require a source URL and valid `source.verified_at` date. This is the last date our pipeline or a human verified the current price, not the provider's effective price-change date.
+- Non-account-gated plans require a source URL and valid `source.verifiedAt` date. This is the last date our pipeline or a human verified the current price, not the provider's effective price-change date.
 - Record the price in the currency charged for the plan's region. Do not convert or relabel it as USD; any normalized comparison price must be a separate derived value with its exchange-rate provenance.
 - `source.method: automated` requires a non-empty `source.url` and `source.evidence`.
-- `url_visibility: account_required` requires a non-empty `access_hint` and `source.method: manual` with `source.url: null`.
+- `urlVisibility: account_required` requires a non-empty `accessHint` and `source.method: manual` with `source.url: null`.
 
 ### URLs object (provider-level only)
 
 - official (optional)
 - pricing
 - cancellation
-- help_center
+- helpCenter
 
 ### Plan price trend object (optional)
 
 - trend
-- last_increase
-- increase_percent
+- lastIncrease
+- increasePercent
 
 ### Intelligence object (optional)
 
-- seasonal_pattern
-- value_drift_signals[]
-- cancellation_difficulty
-- benchmark_anchor: category_rank, value_score_baseline
+- seasonalPattern
+- valueDriftSignals[]
+- cancellationDifficulty
+- benchmarkAnchor: categoryRank, valueScoreBaseline
 
 ### Recommendations object (optional)
 
 - alternatives[]
-- upgrade_paths[]: target_plan_id, reason
+- upgradePaths[]: targetPlanId, reason
 
 ### Notes on schema evolution
 
@@ -177,8 +177,8 @@ Conditional plan rules:
 
 - `metadata/`
   - `categories.json`
-  - `providers/<category>/<provider_id>.json` (for example `streaming/netflix.json`, `music_audio/spotify.json`)
-  - `history/<provider_id>/<plan_id>.json` (planned)
+  - `providers/<category>/<providerId>.json` (for example `streaming/netflix.json`, `music_audio/spotify.json`)
+  - `history/<providerId>/<planId>.json` (planned)
 - `pipeline-state/` (planned, internal only)
   - `source-hashes.json`
 - `src/`
@@ -319,27 +319,27 @@ Provider and plan source URLs, official logo provenance pages, and App Store lis
 
 | Field type | Fields | Update method |
 | --- | --- | --- |
-| Deterministic | Provider URL health, `logo.url` image health, App Store artwork refresh from approved IDs, schema validity, staleness of plan `source.verified_at` | Script; changes require PR review |
+| Deterministic | Provider URL health, `logo.url` image health, App Store artwork refresh from approved IDs, schema validity, staleness of plan `source.verifiedAt` | Script; changes require PR review |
 | Human-verified | `urls.*` values (official, pricing, cancellation, help center), plan `source.url`, logo listing identity or official provenance URL, manually selected official image URL | Manual, for every provider |
-| Extracted facts | `plans[]` names, prices, billing cycles, `url_visibility` | Initial extraction: LLM API with evidence. Maintenance: deterministic presence check, LLM fallback on mismatch |
-| Derived public fact | `plans[].price_trend` | Computed from public price history; omitted until history exists |
+| Extracted facts | `plans[]` names, prices, billing cycles, `urlVisibility` | Initial extraction: LLM API with evidence. Maintenance: deterministic presence check, LLM fallback on mismatch |
+| Derived public fact | `plans[].priceTrend` | Computed from public price history; omitted until history exists |
 | Curated public insights | `intelligence`, `recommendations` | Draft against a written rubric; human-reviewed before publishing; values are public |
-| Account-gated | plans with `url_visibility: account_required` | Manual only; flagged when stale |
+| Account-gated | plans with `urlVisibility: account_required` | Manual only; flagged when stale |
 
 ### Pipeline
 
 1. Scheduled/manual trigger (standard maintenance mode by default, or an explicit discovery sweep flag when checking for newly added tiers).
 2. Script fetches each unique `(region, source.url)` / `urls.pricing` (Playwright when pages are JS-rendered) with region-appropriate locale headers (such as `Accept-Language: en-US,en;q=0.9` for `US`). Before trusting the response, assert that the final `response.url` did not geo-redirect to another locale path (for example `/ca/`, `/gb/`, or `/de/`).
-3. Script normalizes the page to visible text and hashes that per `(provider_id, region, url)`, not the raw HTML, so tokens and script bundles don't register as changes. If the hash matches the last confirmed run, the previous evidence still holds and only `source.verified_at` is refreshed. Hashes are stored as described in "Pipeline state" below.
+3. Script normalizes the page to visible text and hashes that per `(providerId, region, url)`, not the raw HTML, so tokens and script bundles don't register as changes. If the hash matches the last confirmed run, the previous evidence still holds and only `source.verifiedAt` is refreshed. Hashes are stored as described in "Pipeline state" below.
 4. Maintenance presence check (when the hash changed or no hash is stored yet):
    - Because `plan.name` may be a normalized UI label (such as `"Amazon Prime (Monthly)"`), the check anchors on `source.evidence` when present (verifying the verbatim evidence snippet still appears in the normalized page text and still contains the recorded price), or on the formatted price plus plan/billing-cycle keywords when `source.evidence` is `null` on a manual seed.
-   - If every recorded plan for that URL passes the presence check, the script updates `source.verified_at`, sets `source.method: automated`, stores/retains the verbatim `evidence` snippet, updates the stored URL hash, and **skips the LLM** (even if surrounding marketing copy changed the page hash). No price-history observation is appended.
+   - If every recorded plan for that URL passes the presence check, the script updates `source.verifiedAt`, sets `source.method: automated`, stores/retains the verbatim `evidence` snippet, updates the stored URL hash, and **skips the LLM** (even if surrounding marketing copy changed the page hash). No price-history observation is appended.
 5. Otherwise (a recorded plan fails the presence check, an explicit plan-discovery sweep was requested, or the provider is in initial extraction), an LLM API call receives the page text plus the plan schema:
-   - In maintenance mode, the prompt also includes the existing `plans[]` (`plan_id`, `name`, `billing_cycle`, `price`) and instructs the model to preserve existing `plan_id` and normalized `name` values whenever a tier still corresponds to an existing plan, only proposing new `plan_id`s for genuinely added tiers.
-   - The prompt requires standard, non-promotional recurring prices per `billing_cycle` (putting trials, intro promos, or monthly-equivalent breakdowns of annual plans in `notes`) and a verbatim `evidence` quote per plan.
+   - In maintenance mode, the prompt also includes the existing `plans[]` (`planId`, `name`, `billingCycle`, `price`) and instructs the model to preserve existing `planId` and normalized `name` values whenever a tier still corresponds to an existing plan, only proposing new `planId`s for genuinely added tiers.
+   - The prompt requires standard, non-promotional recurring prices per `billingCycle` (putting trials, intro promos, or monthly-equivalent breakdowns of annual plans in `notes`) and a verbatim `evidence` quote per plan.
    - Scripts reject any value whose `evidence` does not appear verbatim in the fetched text.
 6. Scripts validate the output: AJV schema, currency/billing-cycle checks, flag price changes > ~25%, flag removed plans, reject values missing evidence.
-7. Script checks provider URL availability, redirects, and expected content; fetches and decodes `logo.url` to check usable image content and dimensions; and queries Apple's lookup API to propose a refreshed App Store artwork URL from the approved `app_store_id` only if the current `logo.url` fails health checks (or an explicit icon refresh is requested). Retry transient errors and report blocked requests separately from broken URLs. HTTP 200 alone is not sufficient.
+7. Script checks provider URL availability, redirects, and expected content; fetches and decodes `logo.url` to check usable image content and dimensions; and queries Apple's lookup API to propose a refreshed App Store artwork URL from the approved `appStoreId` only if the current `logo.url` fails health checks (or an explicit icon refresh is requested). Retry transient errors and report blocked requests separately from broken URLs. HTTP 200 alone is not sufficient.
 8. Pipeline opens a PR with old → new values, evidence, and source URLs. Nothing auto-merges.
 9. On merge: build bundle, publish to GitHub Pages.
 
@@ -347,17 +347,17 @@ Maintenance decision table:
 
 | Content hash | Recorded values present | Action |
 | --- | --- | --- |
-| Unchanged | (check skipped) | Refresh `verified_at` |
-| Changed | Yes | Refresh `verified_at`, `evidence`, and stored hash; skip LLM (unless explicit discovery sweep) |
-| Changed | No | Value changed or removed → LLM (with existing `plans[]` for `plan_id` mapping) |
-| No stored hash | Yes | Refresh `verified_at` and `evidence`; record baseline hash; skip LLM |
-| No stored hash | No | LLM (with existing `plans[]` for `plan_id` mapping) |
+| Unchanged | (check skipped) | Refresh `verifiedAt` |
+| Changed | Yes | Refresh `verifiedAt`, `evidence`, and stored hash; skip LLM (unless explicit discovery sweep) |
+| Changed | No | Value changed or removed → LLM (with existing `plans[]` for `planId` mapping) |
+| No stored hash | Yes | Refresh `verifiedAt` and `evidence`; record baseline hash; skip LLM |
+| No stored hash | No | LLM (with existing `plans[]` for `planId` mapping) |
 
 ### Pipeline state
 
-- Content hashes are internal pipeline state, not provider data. They live in a committed `pipeline-state/source-hashes.json`, keyed by `(provider_id, region, source_url)` since multiple plans commonly share one pricing URL.
+- Content hashes are internal pipeline state, not provider data. They live in a committed `pipeline-state/source-hashes.json`, keyed by `(providerId, region, source_url)` since multiple plans commonly share one pricing URL.
 - The file sits outside `metadata/`, is not validated by the provider schema, and is never included in the published bundle.
-- The pipeline updates it in the same PR as the related `verified_at` or plan changes, so it adds no separate commits.
+- The pipeline updates it in the same PR as the related `verifiedAt` or plan changes, so it adds no separate commits.
 - Because landing-page marketing copy changes frequently, a hash change combined with a passing presence check does not trigger the LLM on regular runs; newly added tiers are detected either when a page redesign breaks a presence check or during an explicit discovery sweep.
 
 ### Model selection
@@ -382,13 +382,13 @@ No model is chosen yet; the seed trial (rollout step 3) selects it. The task is 
 
 ### Price history
 
-- Append-only per-plan history (planned at `metadata/history/<provider_id>/<plan_id>.json`) will record the initial verified baseline and each subsequently confirmed price change. Each observation will record `price` (`amount` and ISO 4217 `currency`), region, and `observed_at` date when we confirmed it; do not imply this is the provider's effective change date unless the provider states that date.
-- The planned publishing build will include these observations inside the single `dist/providers.json` bundle alongside the current provider/plan records. A scheduled check that finds no price change will update the current plan's `source.verified_at` but will not append a duplicate price-history observation.
-- The app derives price trends and any other time-based intelligence from the published history. Optional `plans[].price_trend` (`trend`, `last_increase`, `increase_percent`) is a precomputed convenience, not a substitute for publishing history; omit it until enough verified history exists.
+- Append-only per-plan history (planned at `metadata/history/<providerId>/<planId>.json`) will record the initial verified baseline and each subsequently confirmed price change. Each observation will record `price` (`amount` and ISO 4217 `currency`), region, and `observedAt` date when we confirmed it; do not imply this is the provider's effective change date unless the provider states that date.
+- The planned publishing build will include these observations inside the single `dist/providers.json` bundle alongside the current provider/plan records. A scheduled check that finds no price change will update the current plan's `source.verifiedAt` but will not append a duplicate price-history observation.
+- The app derives price trends and any other time-based intelligence from the published history. Optional `plans[].priceTrend` (`trend`, `lastIncrease`, `increasePercent`) is a precomputed convenience, not a substitute for publishing history; omit it until enough verified history exists.
 
 ### Insight rubric
 
-- A written rubric defines `cancellation_difficulty` 1–5, `value_score_baseline`, `category_rank`, and `seasonal_pattern` so public insight values are consistent and reviewable.
+- A written rubric defines `cancellationDifficulty` 1–5, `valueScoreBaseline`, `categoryRank`, and `seasonalPattern` so public insight values are consistent and reviewable.
 - LLM-drafted insight and recommendation changes require human review in a PR; the client-side scoring implementation remains in the app.
 
 ### Rollout order

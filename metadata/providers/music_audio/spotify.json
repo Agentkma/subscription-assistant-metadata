@@ -1,9 +1,9 @@
 {
   "version": "2026-09-12",
-  "provider_id": "spotify",
+  "providerId": "spotify",
   "name": "Spotify",
   "category": "music_audio",
-  "default_region": "US",
+  "defaultRegion": "US",
   "regions": [
     "US"
   ],
@@ -13,72 +13,72 @@
       "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/5f/b6/e0/5fb6e0c6-cea6-e107-8d54-8e8fcec573ce/AppIcon-0-0-1x_U007epad-0-1-0-0-sRGB-85-220.png/512x512bb.jpg",
       "source": {
         "type": "app_store",
-        "app_store_id": "324684580"
+        "appStoreId": "324684580"
       }
     },
     "plans": [
       {
-        "plan_id": "individual",
+        "planId": "individual",
         "name": "Individual",
-        "billing_cycle": "monthly",
+        "billingCycle": "monthly",
         "price": {
           "amount": 12.99,
           "currency": "USD"
         },
         "notes": "Free for 2 months for eligible new subscribers, then $12.99/month.",
-        "url_visibility": "public",
+        "urlVisibility": "public",
         "source": {
           "url": "https://www.spotify.com/us/premium/#plans",
-          "verified_at": "2026-10-25",
+          "verifiedAt": "2026-10-25",
           "method": "manual",
           "evidence": "Individual $0 for 2 months $12.99 / month after"
         }
       },
       {
-        "plan_id": "duo",
+        "planId": "duo",
         "name": "Duo",
-        "billing_cycle": "monthly",
+        "billingCycle": "monthly",
         "price": {
           "amount": 18.99,
           "currency": "USD"
         },
-        "url_visibility": "public",
+        "urlVisibility": "public",
         "source": {
           "url": "https://www.spotify.com/us/premium/#plans",
-          "verified_at": "2026-10-25",
+          "verifiedAt": "2026-10-25",
           "method": "manual",
           "evidence": "Duo $18.99 / month"
         }
       },
       {
-        "plan_id": "family",
+        "planId": "family",
         "name": "Family",
-        "billing_cycle": "monthly",
+        "billingCycle": "monthly",
         "price": {
           "amount": 21.99,
           "currency": "USD"
         },
-        "url_visibility": "public",
+        "urlVisibility": "public",
         "source": {
           "url": "https://www.spotify.com/us/premium/#plans",
-          "verified_at": "2026-10-25",
+          "verifiedAt": "2026-10-25",
           "method": "manual",
           "evidence": "Family $21.99 / month"
         }
       },
       {
-        "plan_id": "student",
+        "planId": "student",
         "name": "Student",
-        "billing_cycle": "monthly",
+        "billingCycle": "monthly",
         "price": {
           "amount": 6.99,
           "currency": "USD"
         },
         "notes": "Free for 1 month for eligible students, then $6.99/month; includes access to Hulu (With Ads).",
-        "url_visibility": "public",
+        "urlVisibility": "public",
         "source": {
           "url": "https://www.spotify.com/us/premium/#plans",
-          "verified_at": "2026-10-25",
+          "verifiedAt": "2026-10-25",
           "method": "manual",
           "evidence": "Student $0 for 1 month $6.99 / month after"
         }
@@ -88,10 +88,10 @@
       "official": "https://www.spotify.com/us/",
       "pricing": "https://www.spotify.com/us/premium/#plans",
       "cancellation": "https://support.spotify.com/us/article/cancel-premium/",
-      "help_center": "https://support.spotify.com/us/"
+      "helpCenter": "https://support.spotify.com/us/"
     }
   },
-  "regional_overrides": {
+  "regionalOverrides": {
     "US": {}
   }
 }

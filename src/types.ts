@@ -3,7 +3,7 @@ export type SupportedRegion = 'US' | 'CA' | 'UK' | 'EU' | 'AU' | 'GLOBAL';
 export type BillingCycle = 'monthly' | 'yearly' | 'weekly' | 'quarterly';
 
 export type LogoSource =
-  | { type: 'app_store'; app_store_id: string }
+  | { type: 'app_store'; appStoreId: string }
   | { type: 'official'; url: string };
 
 export type SeasonalPattern =
@@ -27,7 +27,7 @@ export type SourceMethod = 'manual' | 'automated';
 
 export type ManualPlanSource = {
   url: string;
-  verified_at: string;
+  verifiedAt: string;
   method: 'manual';
   evidence?: string | null;
 };
@@ -36,7 +36,7 @@ export type AccountGatedPlanSource = Omit<ManualPlanSource, 'url'> & { url: null
 
 export type AutomatedPlanSource = {
   url: string;
-  verified_at: string;
+  verifiedAt: string;
   method: 'automated';
   evidence: string;
 };
@@ -49,23 +49,23 @@ export interface PlanPrice {
 }
 
 interface ProviderPlanBase {
-  plan_id: string;
+  planId: string;
   name: string;
-  billing_cycle: BillingCycle;
+  billingCycle: BillingCycle;
   price: PlanPrice;
   notes?: string | null;
-  price_trend?: PriceTrend;
+  priceTrend?: PriceTrend;
 }
 
 export type ProviderPlan = ProviderPlanBase & (
   | {
-      url_visibility: 'account_required';
-      access_hint: string;
+      urlVisibility: 'account_required';
+      accessHint: string;
       source: AccountGatedPlanSource;
     }
   | {
-      url_visibility?: Exclude<UrlVisibility, 'account_required'>;
-      access_hint?: string | null;
+      urlVisibility?: Exclude<UrlVisibility, 'account_required'>;
+      accessHint?: string | null;
       source: PlanSource;
     }
 );
@@ -74,37 +74,37 @@ export interface ProviderUrls {
   official?: string | null;
   pricing?: string | null;
   cancellation?: string | null;
-  help_center?: string | null;
+  helpCenter?: string | null;
 }
 
 export type ProviderLevelUrls = ProviderUrls;
 
 export interface PriceTrend {
   trend: TrendDirection;
-  last_increase?: string | null;
-  increase_percent?: number | null;
+  lastIncrease?: string | null;
+  increasePercent?: number | null;
 }
 
 export interface BenchmarkAnchor {
-  category_rank: number;
-  value_score_baseline: number;
+  categoryRank: number;
+  valueScoreBaseline: number;
 }
 
 export interface Intelligence {
-  seasonal_pattern: SeasonalPattern;
-  value_drift_signals: string[];
-  cancellation_difficulty: number;
-  benchmark_anchor: BenchmarkAnchor;
+  seasonalPattern: SeasonalPattern;
+  valueDriftSignals: string[];
+  cancellationDifficulty: number;
+  benchmarkAnchor: BenchmarkAnchor;
 }
 
 export interface UpgradePath {
-  target_plan_id: string;
+  targetPlanId: string;
   reason: string;
 }
 
 export interface ProviderRecommendations {
   alternatives: string[];
-  upgrade_paths: UpgradePath[];
+  upgradePaths: UpgradePath[];
 }
 
 export interface ProviderDefault {
@@ -119,24 +119,24 @@ export type ProviderOverride = Partial<ProviderDefault>;
 
 export interface ProviderRecord {
   version: string;
-  provider_id: string;
+  providerId: string;
   name: string;
   category: string;
-  default_region: SupportedRegion;
+  defaultRegion: SupportedRegion;
   regions: SupportedRegion[];
   supported: boolean;
   default: ProviderDefault;
-  regional_overrides: Partial<Record<SupportedRegion, ProviderOverride>>;
+  regionalOverrides: Partial<Record<SupportedRegion, ProviderOverride>>;
 }
 
 export interface CategoryDefinition {
   id: string;
   name: string;
-  display_name: string;
+  displayName: string;
 }
 
 export interface CategoryRecord extends CategoryDefinition {
-  provider_count: number;
+  providerCount: number;
 }
 
 export interface VersionManifest {

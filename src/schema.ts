@@ -25,11 +25,11 @@ const logoSchema = {
       oneOf: [
         {
           type: 'object',
-          required: ['type', 'app_store_id'],
+          required: ['type', 'appStoreId'],
           additionalProperties: false,
           properties: {
             type: { const: 'app_store' },
-            app_store_id: { type: 'string', pattern: '^[0-9]+$' }
+            appStoreId: { type: 'string', pattern: '^[0-9]+$' }
           }
         },
         {
@@ -52,29 +52,29 @@ const priceTrendSchema = {
   additionalProperties: false,
   properties: {
     trend: { type: 'string', enum: ['upward', 'downward', 'flat'] },
-    last_increase: { type: ['string', 'null'], minLength: 1 },
-    increase_percent: { type: ['number', 'null'] }
+    lastIncrease: { type: ['string', 'null'], minLength: 1 },
+    increasePercent: { type: ['number', 'null'] }
   }
 } as const;
 
 const intelligenceSchema = {
   type: 'object',
-  required: ['seasonal_pattern', 'value_drift_signals', 'cancellation_difficulty', 'benchmark_anchor'],
+  required: ['seasonalPattern', 'valueDriftSignals', 'cancellationDifficulty', 'benchmarkAnchor'],
   additionalProperties: false,
   properties: {
-    seasonal_pattern: {
+    seasonalPattern: {
       type: 'string',
       enum: ['winter_release_spike', 'new_year_spike', 'back_to_school', 'election_cycle', 'holiday_season', 'none']
     },
-    value_drift_signals: { type: 'array', items: { type: 'string' } },
-    cancellation_difficulty: { type: 'number', minimum: 1, maximum: 5 },
-    benchmark_anchor: {
+    valueDriftSignals: { type: 'array', items: { type: 'string' } },
+    cancellationDifficulty: { type: 'number', minimum: 1, maximum: 5 },
+    benchmarkAnchor: {
       type: 'object',
-      required: ['category_rank', 'value_score_baseline'],
+      required: ['categoryRank', 'valueScoreBaseline'],
       additionalProperties: false,
       properties: {
-        category_rank: { type: 'number', minimum: 1 },
-        value_score_baseline: { type: 'number', minimum: 0, maximum: 1 }
+        categoryRank: { type: 'number', minimum: 1 },
+        valueScoreBaseline: { type: 'number', minimum: 0, maximum: 1 }
       }
     }
   }
@@ -82,18 +82,18 @@ const intelligenceSchema = {
 
 const recommendationsSchema = {
   type: 'object',
-  required: ['alternatives', 'upgrade_paths'],
+  required: ['alternatives', 'upgradePaths'],
   additionalProperties: false,
   properties: {
     alternatives: { type: 'array', items: { type: 'string' } },
-    upgrade_paths: {
+    upgradePaths: {
       type: 'array',
       items: {
         type: 'object',
-        required: ['target_plan_id', 'reason'],
+        required: ['targetPlanId', 'reason'],
         additionalProperties: false,
         properties: {
-          target_plan_id: { type: 'string', minLength: 1 },
+          targetPlanId: { type: 'string', minLength: 1 },
           reason: { type: 'string', minLength: 1 }
         }
       }
@@ -125,30 +125,30 @@ const providerUrlsSchema = {
     official: nullableHttpsUrlSchema,
     pricing: nullableHttpsUrlSchema,
     cancellation: nullableHttpsUrlSchema,
-    help_center: nullableHttpsUrlSchema
+    helpCenter: nullableHttpsUrlSchema
   }
 } as const;
 
 const providerPlanSchema = {
   type: 'object',
-  required: ['plan_id', 'name', 'billing_cycle', 'price'],
+  required: ['planId', 'name', 'billingCycle', 'price'],
   additionalProperties: false,
   properties: {
-    plan_id: { type: 'string', minLength: 1 },
+    planId: { type: 'string', minLength: 1 },
     name: { type: 'string', minLength: 1 },
-    billing_cycle: { type: 'string', enum: ['monthly', 'yearly', 'weekly', 'quarterly'] },
+    billingCycle: { type: 'string', enum: ['monthly', 'yearly', 'weekly', 'quarterly'] },
     price: planPriceSchema,
     notes: { type: ['string', 'null'] },
-    url_visibility: { type: 'string', enum: ['public', 'account_required', 'unknown'] },
-    access_hint: { type: ['string', 'null'], minLength: 1 },
-    price_trend: priceTrendSchema,
+    urlVisibility: { type: 'string', enum: ['public', 'account_required', 'unknown'] },
+    accessHint: { type: ['string', 'null'], minLength: 1 },
+    priceTrend: priceTrendSchema,
     source: {
       type: 'object',
-      required: ['verified_at', 'method'],
+      required: ['verifiedAt', 'method'],
       additionalProperties: false,
       properties: {
         url: nullableHttpsUrlSchema,
-        verified_at: { type: 'string', format: 'date' },
+        verifiedAt: { type: 'string', format: 'date' },
         method: { type: 'string', enum: ['manual', 'automated'] },
         evidence: { type: ['string', 'null'], minLength: 1 }
       },
@@ -162,11 +162,11 @@ const providerPlanSchema = {
       }
     }
   },
-  if: { properties: { url_visibility: { const: 'account_required' } }, required: ['url_visibility'] },
+  if: { properties: { urlVisibility: { const: 'account_required' } }, required: ['urlVisibility'] },
   then: {
-    required: ['access_hint', 'source'],
+    required: ['accessHint', 'source'],
     properties: {
-      access_hint: { type: 'string', minLength: 1 },
+      accessHint: { type: 'string', minLength: 1 },
       source: {
         required: ['method', 'url'],
         properties: {
@@ -210,25 +210,25 @@ export const providerSchema = {
   type: 'object',
   required: [
     'version',
-    'provider_id',
+    'providerId',
     'name',
     'category',
-    'default_region',
+    'defaultRegion',
     'regions',
     'supported',
     'default',
-    'regional_overrides'
+    'regionalOverrides'
   ],
   additionalProperties: false,
   properties: {
     version: { type: 'string', minLength: 1 },
-    provider_id: { type: 'string', minLength: 1 },
+    providerId: { type: 'string', minLength: 1 },
     name: { type: 'string', minLength: 1 },
     category: {
       type: 'string',
       enum: supportedCategories
     },
-    default_region: { type: 'string', enum: supportedRegionEnum },
+    defaultRegion: { type: 'string', enum: supportedRegionEnum },
     regions: {
       type: 'array',
       items: { type: 'string', enum: supportedRegionEnum },
@@ -237,7 +237,7 @@ export const providerSchema = {
     },
     supported: { type: 'boolean' },
     default: providerMetaSchema,
-    regional_overrides: {
+    regionalOverrides: {
       type: 'object',
       propertyNames: { type: 'string', enum: supportedRegionEnum },
       additionalProperties: {

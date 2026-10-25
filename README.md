@@ -27,7 +27,7 @@ The current phase follows an Agile vertical-slice approach: the three seed provi
 
 The first maintenance automation is a read-only source health check. Run `npm run check:sources` locally or dispatch the monthly GitHub Actions workflow. It checks configured page and image URLs, reports access-blocked responses for manual review, and fails on definite errors. It does not extract prices, modify provider records, or publish a bundle.
 
-Once the app contract is proven in a real build, the planned extraction layer will run in two modes. Initial extraction uses an LLM to draft plans for new providers from human-verified URLs. Maintenance first checks deterministically whether each recorded plan's verbatim `source.evidence` (or price and tier keywords on a manual seed) still appears on the page; if it does, it refreshes `source.verified_at` and the stored URL hash without calling the LLM, which runs only on mismatches or explicit plan-discovery sweeps. All proposed changes go through PR review. See `plan-metadata.md` for the pipeline.
+Once the app contract is proven in a real build, the planned extraction layer will run in two modes. Initial extraction uses an LLM to draft plans for new providers from human-verified URLs. Maintenance first checks deterministically whether each recorded plan's verbatim `source.evidence` (or price and tier keywords on a manual seed) still appears on the page; if it does, it refreshes `source.verifiedAt` and the stored URL hash without calling the LLM, which runs only on mismatches or explicit plan-discovery sweeps. All proposed changes go through PR review. See `plan-metadata.md` for the pipeline.
 
 ## Metadata model
 
@@ -38,6 +38,8 @@ The bundle is built around provider metadata for subscription services, includin
 - regional support and plan details
 - official source URLs and verification provenance
 - append-only price history published with the provider bundle for downstream trend analysis
+
+JSON keys use camelCase (`providerId`, `verifiedAt`) to match the TypeScript consumer. Identifier and enum values stay snake_case (`music_audio`, `prime_monthly`, `account_required`), and provider filenames match their `providerId` value.
 - optional plan-level price trends derived from that history
 - optional provider insights and recommendations for the app to present
 
@@ -47,9 +49,9 @@ The published catalog is intentionally partial during the seed and automation tr
 
 The repository uses a JSON Schema contract to define the required shape of each provider record. This is a data contract, not app logic: it enforces required fields, allowed enum values, nested object shapes, and compatibility constraints before metadata is published.
 
-Every non-account-gated plan requires a source record with an HTTPS source URL and a valid `verified_at` date. This is when we last checked the current price, not when the provider changed it. `source.method` records how that latest check was made. Automated plan provenance additionally requires non-empty evidence. Account-gated plans require manual provenance with `source.url: null` and a non-empty `access_hint`.
+Every non-account-gated plan requires a source record with an HTTPS source URL and a valid `verifiedAt` date. This is when we last checked the current price, not when the provider changed it. `source.method` records how that latest check was made. Automated plan provenance additionally requires non-empty evidence. Account-gated plans require manual provenance with `source.url: null` and a non-empty `accessHint`.
 
-Prices are recorded in the currency charged for the plan's region; they are not implicitly USD. Any normalized comparison price must be a separate derived value with its exchange-rate provenance. Price changes are intended to be recorded as append-only, dated observations in provider plan history. The planned publishing build will include that history in `dist/providers.json`; the app can use it to derive trends and other time-based insights. History observation dates mean when we verified a value, not the provider's unknown effective price-change date. The current plan's `source.verified_at` is the latest check date; there is no separate `price_last_updated` field. History storage and publication are not implemented yet.
+Prices are recorded in the currency charged for the plan's region; they are not implicitly USD. Any normalized comparison price must be a separate derived value with its exchange-rate provenance. Price changes are intended to be recorded as append-only, dated observations in provider plan history. The planned publishing build will include that history in `dist/providers.json`; the app can use it to derive trends and other time-based insights. History observation dates mean when we verified a value, not the provider's unknown effective price-change date. The current plan's `source.verifiedAt` is the latest check date; there is no separate `price_last_updated` field. History storage and publication are not implemented yet.
 
 ### Provider icons
 
@@ -60,7 +62,7 @@ Each `logo` contains one resolved HTTPS image URL and one source record. Prefer 
   "url": "https://official-image-host.example/provider-icon.png",
   "source": {
     "type": "app_store",
-    "app_store_id": "324684580"
+    "appStoreId": "324684580"
   }
 }
 ```
@@ -100,10 +102,10 @@ metadata/
   categories.json
   providers/
     <category>/
-      <provider_id>.json
+      <providerId>.json
   history/                  (planned)
-    <provider_id>/
-      <plan_id>.json
+    <providerId>/
+      <planId>.json
 
 pipeline-state/             (planned, internal only)
   source-hashes.json

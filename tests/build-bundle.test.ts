@@ -43,10 +43,10 @@ test('writes providers.json and version.json with matching version metadata', as
   });
 });
 
-test('includes every provider file sorted by provider_id', async () => {
+test('includes every provider file sorted by providerId', async () => {
   await withTempDir(async (outDir) => {
     const { bundle } = await buildBundle({ providersDir, categoriesFile, outDir, ...fixedOptions });
-    const ids = bundle.providers.map((provider) => provider.provider_id);
+    const ids = bundle.providers.map((provider) => provider.providerId);
     const providerFileCount = (await fs.readdir(providersDir, { recursive: true })).filter((entry) =>
       entry.endsWith('.json')
     ).length;
@@ -66,7 +66,7 @@ test('publishes every supported category with counts of published providers', as
     );
     for (const category of bundle.categories) {
       const expected = bundle.providers.filter((provider) => provider.category === category.id).length;
-      assert.equal(category.provider_count, expected, category.id);
+      assert.equal(category.providerCount, expected, category.id);
     }
   });
 });
@@ -96,13 +96,13 @@ test('fails without writing output when a provider file is invalid', async () =>
     await fs.mkdir(path.join(badProvidersDir, 'streaming'), { recursive: true });
     await fs.writeFile(
       path.join(badProvidersDir, 'streaming/netflix.json'),
-      JSON.stringify({ ...netflix, default_region: 'CA' }),
+      JSON.stringify({ ...netflix, defaultRegion: 'CA' }),
       'utf8'
     );
 
     await assert.rejects(
       buildBundle({ providersDir: badProvidersDir, categoriesFile, outDir, ...fixedOptions }),
-      /Invalid provider file\(s\)[\s\S]*default_region/
+      /Invalid provider file\(s\)[\s\S]*defaultRegion/
     );
     await assert.rejects(fs.access(outDir));
   });

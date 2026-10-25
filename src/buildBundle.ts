@@ -41,10 +41,10 @@ async function readProviderFile(file: string): Promise<ProviderRecord> {
 
 // Plain string comparison (UTF-16 code units) keeps output identical regardless of the build machine's locale.
 function compareByProviderId(a: ProviderRecord, b: ProviderRecord): number {
-  if (a.provider_id < b.provider_id) {
+  if (a.providerId < b.providerId) {
     return -1;
   }
-  return a.provider_id > b.provider_id ? 1 : 0;
+  return a.providerId > b.providerId ? 1 : 0;
 }
 
 async function loadValidProviders(providersDir: string): Promise<ProviderRecord[]> {
@@ -71,7 +71,7 @@ function isCategoryDefinition(value: unknown): value is CategoryDefinition {
     candidate !== null &&
     typeof candidate.id === 'string' &&
     typeof candidate.name === 'string' &&
-    typeof candidate.display_name === 'string'
+    typeof candidate.displayName === 'string'
   );
 }
 
@@ -79,7 +79,7 @@ async function loadCategories(categoriesFile: string): Promise<CategoryDefinitio
   const categories: unknown = JSON.parse(await fs.readFile(categoriesFile, TEXT_ENCODING));
 
   if (!Array.isArray(categories) || !categories.every(isCategoryDefinition)) {
-    throw new Error(`${categoriesFile} must be an array of { id, name, display_name } records`);
+    throw new Error(`${categoriesFile} must be an array of { id, name, displayName } records`);
   }
 
   const ids = categories.map((category) => category.id);
@@ -98,13 +98,13 @@ async function loadCategories(categoriesFile: string): Promise<CategoryDefinitio
   return categories;
 }
 
-// provider_count is derived at build time; categories.json does not store it.
+// providerCount is derived at build time; categories.json does not store it.
 function withPublishedProviderCounts(categories: CategoryDefinition[], providers: ProviderRecord[]): CategoryRecord[] {
-  return categories.map(({ id, name, display_name }) => ({
+  return categories.map(({ id, name, displayName }) => ({
     id,
     name,
-    display_name,
-    provider_count: providers.filter((provider) => provider.category === id).length
+    displayName,
+    providerCount: providers.filter((provider) => provider.category === id).length
   }));
 }
 
