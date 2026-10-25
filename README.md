@@ -75,9 +75,9 @@ Pull requests run the required project validation workflow: tests, provider sche
 
 ## Publishing and versioning
 
-This repository is still pre-release: no public bundle has been published and no downstream consumer contract is active. During this phase, the schema and seed data may change without version increments.
+This repository is still pre-release: no public bundle has been published and no downstream consumer contract is active. During this phase, bundles carry `0.x` versions (currently `bundleVersion` and `schemaVersion` `0.1.0`, per SemVer's unstable-API convention), and the schema and seed data may change without version increments.
 
-When the repo is explicitly marked ready for its first public release, establish initial `bundleVersion` and `schemaVersion` values and publish the first bundle. From then on, published versioning rules apply: metadata-only changes increment `bundleVersion`; breaking contract changes require a new major `schemaVersion` and coordination with downstream consumers before release.
+When the repo is explicitly marked ready for its first public release, set `bundleVersion` and `schemaVersion` to `1.0.0` and publish the first bundle. From then on, published versioning rules apply: metadata-only changes increment `bundleVersion`; breaking contract changes require a new major `schemaVersion` and coordination with downstream consumers before release.
 
 The planned publishing flow produces a single bundled JSON artifact and a separate version manifest:
 
@@ -91,7 +91,7 @@ After the initial release, the repo uses a dual-version model:
 - bundleVersion: SemVer for metadata content releases
 - schemaVersion: SemVer for the metadata contract itself
 
-This allows the consumer app to detect both data updates and compatibility-breaking schema changes. Do not bump versions for pre-release contract iteration before the initial bundle is published.
+This allows the consumer app to detect both data updates and compatibility-breaking schema changes. Do not bump the `0.x` versions for pre-release contract iteration before the initial `1.0.0` bundle is published.
 
 ## Repo structure
 

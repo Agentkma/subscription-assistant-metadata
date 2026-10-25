@@ -38,7 +38,7 @@ async function readProviderFile(file: string): Promise<ProviderRecord> {
   return JSON.parse(await fs.readFile(file, TEXT_ENCODING)) as ProviderRecord;
 }
 
-// Code-point ordering keeps output identical regardless of the build machine's locale.
+// Plain string comparison (UTF-16 code units) keeps output identical regardless of the build machine's locale.
 function compareByProviderId(a: ProviderRecord, b: ProviderRecord): number {
   if (a.provider_id < b.provider_id) {
     return -1;
