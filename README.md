@@ -23,11 +23,11 @@ It does not contain:
 
 ## Current focus
 
-The current phase keeps three seed provider records for manual verification and a maintenance-workflow trial: Netflix, Amazon Prime Video, and Spotify. The other planned providers are tracked in `provider-source-checklist.md` and do not have active JSON records yet. Seed records are drafts until their URLs, plans, and prices have been checked; do not publish them as verified data before that review.
+The current phase follows an Agile vertical-slice approach: manually verify the three seed provider records (Netflix, Amazon Prime Video, and Spotify), publish a minimal 3-provider bundle to GitHub Pages, and validate the metadata contract inside the private SubSage app and through App Store review before building the automated extraction pipeline or expanding the catalog. The other planned providers are tracked in `provider-source-checklist.md` and do not have active JSON records yet. Seed records are drafts until their URLs, plans, and prices have been checked; do not publish them as verified data before that review.
 
 The first maintenance automation is a read-only source health check. Run `npm run check:sources` locally or dispatch the monthly GitHub Actions workflow. It checks configured page and image URLs, reports access-blocked responses for manual review, and fails on definite errors. It does not extract prices, modify provider records, or publish a bundle.
 
-The planned extraction layer has two modes. Initial extraction uses an LLM to draft plans for new providers from human-verified URLs. Maintenance first checks deterministically whether each recorded plan's verbatim `source.evidence` (or price and tier keywords on a manual seed) still appears on the page; if it does, it refreshes `source.verified_at` and the stored URL hash without calling the LLM, which runs only on mismatches or explicit plan-discovery sweeps. All proposed changes go through PR review. See `plan-metadata.md` for the pipeline.
+Once the app contract is proven in a real build, the planned extraction layer will run in two modes. Initial extraction uses an LLM to draft plans for new providers from human-verified URLs. Maintenance first checks deterministically whether each recorded plan's verbatim `source.evidence` (or price and tier keywords on a manual seed) still appears on the page; if it does, it refreshes `source.verified_at` and the stored URL hash without calling the LLM, which runs only on mismatches or explicit plan-discovery sweeps. All proposed changes go through PR review. See `plan-metadata.md` for the pipeline.
 
 ## Metadata model
 
