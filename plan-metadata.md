@@ -117,19 +117,18 @@ Future scripts resolve `app_store` sources through Apple's lookup API using the 
 
 ### Plan object
 
-- plan_id
-- name
+- plan_id: stable identifier within the provider; preserved across price updates so append-only price history stays linked
+- name: normalized display name for the app UI (may differ from verbatim marketing copy on the page)
 - billing_cycle
-- price: `amount` and `currency` (three-letter ISO 4217 code)
-- notes (optional)
+- price: `amount` and `currency` (three-letter ISO 4217 code). Always record the standard, non-promotional recurring charge billed per `billing_cycle` (for example, the full annual charge for `yearly` or the post-trial recurring charge for `monthly`), never introductory promo rates or monthly-equivalent breakdowns of annual plans
+- notes (optional): use for introductory offers, bundle caveats, or monthly-equivalent breakdowns
 - url_visibility (optional): `public` | `account_required` | `unknown`
 - access_hint (optional generally; required and non-empty when `url_visibility` is `account_required`): user-facing guidance, never treated as a public source
-- urls (optional): plan-specific pricing/cancellation/help links; null when account-gated
 - source (required for every plan):
   - url: HTTPS page the price was confirmed on (required and non-empty for non-account-gated plans; explicitly null for account-gated plans)
   - verified_at: valid ISO date when a human or the pipeline confirmed the value
   - method: `manual` | `automated` — how the value was most recently verified; a script re-confirmation of a manually entered value sets `automated`
-  - evidence: short quoted snippet from the source page (required and non-empty for `automated`)
+  - evidence: short verbatim snippet from the source page confirming the plan and price (required and non-empty for `automated`; also serves as the anchor for deterministic maintenance checks)
 
 Conditional plan rules:
 
@@ -138,9 +137,9 @@ Conditional plan rules:
 - `source.method: automated` requires a non-empty `source.url` and `source.evidence`.
 - `url_visibility: account_required` requires a non-empty `access_hint` and `source.method: manual` with `source.url: null`.
 
-### URLs object
+### URLs object (provider-level only)
 
-- official (optional, provider-level only)
+- official (optional)
 - pricing
 - cancellation
 - help_center
@@ -176,27 +175,32 @@ Conditional plan rules:
 
 ### Repo layout
 
-- metadata/
-  - providers/
-    - netflix.json
-    - spotify.json
-    - ...
-  - categories.json
-  - schema/
-    - provider-schema.json
-- src/
-  - schema/
-  - types/
-  - validators/
-  - builders/
-  - utils/
-  - providers.json
-  - version.json
-- .github/workflows/
-  - publish-metadata.yml
-- package.json
-- tsconfig.json
-- README.md
+- `metadata/`
+  - `categories.json`
+  - `providers/<category>/<provider_id>.json` (for example `streaming/netflix.json`, `music_audio/spotify.json`)
+  - `history/<provider_id>/<plan_id>.json` (planned)
+- `pipeline-state/` (planned, internal only)
+  - `source-hashes.json`
+- `src/`
+  - `schema.ts`
+  - `types.ts`
+  - `validateProviders.ts`
+  - `checkProviderSources.ts`
+- `tests/`
+  - `provider-validation.test.ts`
+  - `provider-source-check.test.ts`
+- `dist/` (planned build output)
+  - `providers.json`
+  - `version.json`
+- `.github/workflows/`
+  - `validate.yml`
+  - `check-provider-sources.yml`
+  - `publish-metadata.yml` (planned)
+- `package.json`
+- `tsconfig.json`
+- `README.md`
+- `plan-metadata.md`
+- `provider-source-checklist.md`
 
 ### Build approach
 
@@ -274,24 +278,27 @@ This allows the consuming app to detect both content updates and structural comp
 
 ## Publishing flow
 
-### GitHub Actions pipeline
+ GitHub Actions are split by responsibility so external site checks never run inside the deterministic merge gate or publish build:
 
-1. Trigger on push to main
-2. Trigger on metadata changes
-3. Trigger monthly on the first of the month at 00:00 UTC
-4. Trigger manual workflow dispatch
-5. Validate provider JSON files against the schema
-6. Fetch external metadata for pricing, cancellation, and logo validation as allowed
-7. Compute optional plan-level price trends from verified price history
-8. Include current provider records and append-only price history in dist/providers.json
-9. Generate version.json
-10. Publish dist directory to GitHub Pages
-11. Open a PR with the metadata diff for manual review before merge
+1. **PR validation workflow (`validate.yml`):**
+   - Triggers on pull requests and merge groups targeting `main`
+   - Runs tests, provider schema and semantic validation, TypeScript typechecking, and linting
+2. **Maintenance & extraction PR workflow (planned evolution of `check-provider-sources.yml`):**
+   - Triggers monthly (first of the month) or via manual `workflow_dispatch`
+   - Fetches external pricing, cancellation, and logo URLs
+   - Runs deterministic presence checks (or LLM extraction on mismatch / initial extraction) and updates `pipeline-state/source-hashes.json`
+   - Opens a PR with the metadata diff and evidence for human review; never auto-merges or publishes
+3. **Publish workflow (`publish-metadata.yml`, planned):**
+   - Triggers on push to `main` (when a reviewed PR merges) or manual dispatch
+   - Runs deterministic validation against committed files only (no external scraping)
+   - Computes optional plan-level price trends from committed price history
+   - Builds `dist/providers.json` (current provider records + append-only price history) and `dist/version.json`
+   - Publishes `dist/` to GitHub Pages
 
 ### Output contract
 
-- dist/providers.json
-- dist/version.json
+- `dist/providers.json`
+- `dist/version.json`
 
 This aligns with the app release pattern of shipping a baseline bundle and fetching the latest metadata on app launch when online.
 
@@ -321,11 +328,16 @@ Provider and plan source URLs, official logo provenance pages, and App Store lis
 
 ### Pipeline
 
-1. Scheduled/manual trigger.
-2. Script fetches each provider's `source.url` / `urls.pricing` (Playwright when pages are JS-rendered).
-3. Script normalizes the page to visible text (or the pricing section) and hashes that, not the raw HTML, so tokens, A/B variants, and banners don't register as changes. If the hash matches the last confirmed run, the previous evidence still holds and only `source.verified_at` is refreshed. Hashes are stored as described in "Pipeline state" below.
-4. Maintenance presence check (hash changed or no stored hash): if every recorded plan name and price still appears in the normalized text, the script updates `source.verified_at`, sets `source.method: automated`, and stores the matched snippet as `evidence`. No price-history observation is appended. If a stored hash exists and changed, the LLM still runs (step 5) to look for new plans; with no stored hash yet, the presence check alone is accepted.
-5. Otherwise (a recorded value is missing, the hash changed, or the provider is in initial extraction), an LLM API call receives the page text plus the plan schema and returns structured JSON with a quoted evidence snippet per value. Scripts reject any value whose evidence does not appear verbatim in the fetched text.
+1. Scheduled/manual trigger (standard maintenance mode by default, or an explicit discovery sweep flag when checking for newly added tiers).
+2. Script fetches each unique `(region, source.url)` / `urls.pricing` (Playwright when pages are JS-rendered) with region-appropriate locale headers (such as `Accept-Language: en-US,en;q=0.9` for `US`). Before trusting the response, assert that the final `response.url` did not geo-redirect to another locale path (for example `/ca/`, `/gb/`, or `/de/`).
+3. Script normalizes the page to visible text and hashes that per `(provider_id, region, url)`, not the raw HTML, so tokens and script bundles don't register as changes. If the hash matches the last confirmed run, the previous evidence still holds and only `source.verified_at` is refreshed. Hashes are stored as described in "Pipeline state" below.
+4. Maintenance presence check (when the hash changed or no hash is stored yet):
+   - Because `plan.name` may be a normalized UI label (such as `"Amazon Prime (Monthly)"`), the check anchors on `source.evidence` when present (verifying the verbatim evidence snippet still appears in the normalized page text and still contains the recorded price), or on the formatted price plus plan/billing-cycle keywords when `source.evidence` is `null` on a manual seed.
+   - If every recorded plan for that URL passes the presence check, the script updates `source.verified_at`, sets `source.method: automated`, stores/retains the verbatim `evidence` snippet, updates the stored URL hash, and **skips the LLM** (even if surrounding marketing copy changed the page hash). No price-history observation is appended.
+5. Otherwise (a recorded plan fails the presence check, an explicit plan-discovery sweep was requested, or the provider is in initial extraction), an LLM API call receives the page text plus the plan schema:
+   - In maintenance mode, the prompt also includes the existing `plans[]` (`plan_id`, `name`, `billing_cycle`, `price`) and instructs the model to preserve existing `plan_id` and normalized `name` values whenever a tier still corresponds to an existing plan, only proposing new `plan_id`s for genuinely added tiers.
+   - The prompt requires standard, non-promotional recurring prices per `billing_cycle` (putting trials, intro promos, or monthly-equivalent breakdowns of annual plans in `notes`) and a verbatim `evidence` quote per plan.
+   - Scripts reject any value whose `evidence` does not appear verbatim in the fetched text.
 6. Scripts validate the output: AJV schema, currency/billing-cycle checks, flag price changes > ~25%, flag removed plans, reject values missing evidence.
 7. Script checks provider URL availability, redirects, and expected content; fetches and decodes `logo.url` to check usable image content and dimensions; and proposes refreshed App Store artwork URLs from approved IDs. Retry transient errors and report blocked requests separately from broken URLs. HTTP 200 alone is not sufficient.
 8. Pipeline opens a PR with old → new values, evidence, and source URLs. Nothing auto-merges.
@@ -336,17 +348,17 @@ Maintenance decision table:
 | Content hash | Recorded values present | Action |
 | --- | --- | --- |
 | Unchanged | (check skipped) | Refresh `verified_at` |
-| Changed | Yes | Possible new plan or other change → LLM |
-| Changed | No | Value changed or removed → LLM |
-| No stored hash | Yes | Refresh `verified_at`; record hash |
-| No stored hash | No | LLM |
+| Changed | Yes | Refresh `verified_at`, `evidence`, and stored hash; skip LLM (unless explicit discovery sweep) |
+| Changed | No | Value changed or removed → LLM (with existing `plans[]` for `plan_id` mapping) |
+| No stored hash | Yes | Refresh `verified_at` and `evidence`; record baseline hash; skip LLM |
+| No stored hash | No | LLM (with existing `plans[]` for `plan_id` mapping) |
 
 ### Pipeline state
 
-- Content hashes are internal pipeline state, not provider data. They live in a committed `pipeline-state/source-hashes.json`, keyed by provider ID, plan ID, and source URL.
+- Content hashes are internal pipeline state, not provider data. They live in a committed `pipeline-state/source-hashes.json`, keyed by `(provider_id, region, source_url)` since multiple plans commonly share one pricing URL.
 - The file sits outside `metadata/`, is not validated by the provider schema, and is never included in the published bundle.
 - The pipeline updates it in the same PR as the related `verified_at` or plan changes, so it adds no separate commits.
-- Without a stored hash, the presence check still catches changed or removed values but cannot detect newly added plans; the first run for each source records its baseline hash.
+- Because landing-page marketing copy changes frequently, a hash change combined with a passing presence check does not trigger the LLM on regular runs; newly added tiers are detected either when a page redesign breaks a presence check or during an explicit discovery sweep.
 
 ### Model selection
 
@@ -366,7 +378,7 @@ No model is chosen yet; the seed trial (rollout step 3) selects it. The task is 
 - Schema validation and PR review are the enforcement layer, not the model.
 - Providers that block automated fetches or have no public pricing page are marked manual-only.
 - Check provider terms of service before automated fetching; prefer official help articles or APIs.
-- Confirm extracted prices are USD/US-region, since runner IP location is not guaranteed.
+- Send region-appropriate `Accept-Language` headers and reject unexpected locale redirects (such as `/ca/` or `/gb/` when checking `US`) so runner IP location does not silently swap currencies or plans.
 
 ### Price history
 
@@ -426,9 +438,8 @@ No model is chosen yet; the seed trial (rollout step 3) selects it. The task is 
 
 ### Phase 5: Publishing and review
 
-- Add GitHub Actions workflow for monthly, on-demand, and push-triggered runs
-- Publish dist to GitHub Pages
-- Open a PR with diffs for review and manual approval before merge
+- Add scheduled/manual extraction workflow that opens a PR with diffs and evidence for human review before merge
+- Add push-to-`main` publish workflow that deterministically builds and publishes `dist/providers.json` and `dist/version.json` to GitHub Pages
 
 ### Phase 6: Documentation and maintainability
 

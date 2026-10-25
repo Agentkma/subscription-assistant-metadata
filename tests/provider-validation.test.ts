@@ -1,10 +1,17 @@
 import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import test, { type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { Ajv as JsonValidator } from 'ajv';
 import { fullFormats } from 'ajv-formats/dist/formats.js';
 import { isSupportedCurrencyCode, providerSchema } from '../src/schema.js';
-import { validateProviderFile, validateProvidersDirectory } from '../src/validateProviders.js';
+import type { ProviderRecord } from '../src/types.js';
+import {
+  findProviderSemanticErrors,
+  validateProviderFile,
+  validateProvidersDirectory
+} from '../src/validateProviders.js';
 // NodeNext + ESM requires the .js extension in the import specifier.
 
 const createJsonValidator = () =>
@@ -16,6 +23,7 @@ const createJsonValidator = () =>
 interface ProviderFixture {
   default: {
     plans: Array<{
+      plan_id: string;
       source?: {
         url?: string | null;
         verified_at?: string;
@@ -26,10 +34,25 @@ interface ProviderFixture {
       access_hint?: string | null;
       price: { amount: number; currency: string };
       price_trend?: { trend: string };
+      [key: string]: unknown;
     }>;
     logo: { url?: string | null; source?: unknown; [key: string]: unknown };
+    urls: {
+      official?: string | null;
+      pricing?: string | null;
+      cancellation?: string | null;
+      help_center?: string | null;
+      [key: string]: unknown;
+    };
   };
-  regional_overrides: Record<string, { plans?: ProviderFixture['default']['plans']; logo?: ProviderFixture['default']['logo'] }>;
+  regional_overrides: Record<
+    string,
+    {
+      plans?: ProviderFixture['default']['plans'];
+      logo?: ProviderFixture['default']['logo'];
+      urls?: ProviderFixture['default']['urls'];
+    }
+  >;
 }
 
 interface ProviderValidationCase {
@@ -409,4 +432,133 @@ test('contains the canonical MVP category catalog', async () => {
       'utilities_tools'
     ].sort()
   );
+});
+
+test('validates HTTPS URLs across provider and regional override URL blocks', async (context) => {
+  await runProviderValidationCases(context, 'metadata/providers/streaming/amazon_prime_video.json', [
+    {
+      name: 'rejects HTTP provider pricing URL',
+      valid: false,
+      mutate: (provider) => {
+        provider.default.urls.pricing = 'http://www.amazon.com/amazonprime';
+      }
+    },
+    {
+      name: 'rejects malformed provider official URL',
+      valid: false,
+      mutate: (provider) => {
+        provider.default.urls.official = 'not a url';
+      }
+    },
+    {
+      name: 'rejects legacy plan-level urls object',
+      valid: false,
+      mutate: (provider) => {
+        provider.default.plans[0].urls = {
+          pricing: 'https://www.amazon.com/amazonprime'
+        };
+      }
+    },
+    {
+      name: 'rejects unknown field in regional override urls',
+      valid: false,
+      mutate: (provider) => {
+        provider.regional_overrides.US.urls = { extra: 'https://www.amazon.com' };
+      }
+    },
+    {
+      name: 'rejects HTTP URL in regional override urls',
+      valid: false,
+      mutate: (provider) => {
+        provider.regional_overrides.US.urls = { pricing: 'http://www.amazon.com/amazonprime' };
+      }
+    },
+    {
+      name: 'accepts valid HTTPS URLs in regional override urls',
+      valid: true,
+      mutate: (provider) => {
+        provider.regional_overrides.US.urls = { pricing: 'https://www.amazon.com/amazonprime' };
+      }
+    }
+  ]);
+});
+
+test('enforces semantic invariants for regions, plan IDs, and file paths', async () => {
+  const baseProvider = JSON.parse(
+    await fs.readFile('metadata/providers/streaming/netflix.json', 'utf8')
+  ) as ProviderRecord;
+
+  const mismatchedRegion = structuredClone(baseProvider);
+  mismatchedRegion.default_region = 'CA';
+  assert.match(findProviderSemanticErrors(mismatchedRegion).join('; '), /default_region/);
+
+  const duplicateDefaultPlans = structuredClone(baseProvider);
+  duplicateDefaultPlans.default.plans[1].plan_id = duplicateDefaultPlans.default.plans[0].plan_id;
+  assert.match(findProviderSemanticErrors(duplicateDefaultPlans).join('; '), /duplicate plan_id/);
+
+  const duplicateRegionalPlans = structuredClone(baseProvider);
+  duplicateRegionalPlans.regional_overrides.US = {
+    plans: [
+      structuredClone(baseProvider.default.plans[0]),
+      structuredClone(baseProvider.default.plans[0])
+    ]
+  };
+  assert.match(
+    findProviderSemanticErrors(duplicateRegionalPlans).join('; '),
+    /regional_overrides\/US\/plans duplicate plan_id/
+  );
+
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'provider-validation-'));
+  try {
+    const wrongFilename = path.join(tempDir, 'streaming', 'wrong_id.json');
+    await fs.mkdir(path.dirname(wrongFilename), { recursive: true });
+    await fs.writeFile(wrongFilename, JSON.stringify(baseProvider), 'utf8');
+    const wrongFilenameResult = await validateProviderFile(wrongFilename);
+    assert.equal(wrongFilenameResult.valid, false);
+    assert.match(wrongFilenameResult.errors.join('; '), /must match filename/);
+
+    const wrongCategoryDir = path.join(tempDir, 'gaming', 'netflix.json');
+    await fs.mkdir(path.dirname(wrongCategoryDir), { recursive: true });
+    await fs.writeFile(wrongCategoryDir, JSON.stringify(baseProvider), 'utf8');
+    const wrongCategoryResult = await validateProviderFile(wrongCategoryDir);
+    assert.equal(wrongCategoryResult.valid, false);
+    assert.match(wrongCategoryResult.errors.join('; '), /must match directory/);
+
+    const unknownCategoryDir = path.join(tempDir, 'unexpected', 'netflix.json');
+    await fs.mkdir(path.dirname(unknownCategoryDir), { recursive: true });
+    await fs.writeFile(unknownCategoryDir, JSON.stringify(baseProvider), 'utf8');
+    const unknownCategoryResult = await validateProviderFile(unknownCategoryDir);
+    assert.equal(unknownCategoryResult.valid, false);
+    assert.match(unknownCategoryResult.errors.join('; '), /must match directory "unexpected"/);
+    await fs.rm(unknownCategoryDir);
+
+    const rootLevelFile = path.join(tempDir, 'netflix.json');
+    await fs.writeFile(rootLevelFile, JSON.stringify(baseProvider), 'utf8');
+    const nestedFile = path.join(tempDir, 'streaming', 'nested', 'netflix.json');
+    await fs.mkdir(path.dirname(nestedFile), { recursive: true });
+    await fs.writeFile(nestedFile, JSON.stringify(baseProvider), 'utf8');
+    const depthResults = await validateProvidersDirectory(tempDir);
+    for (const badPath of [rootLevelFile, nestedFile]) {
+      const match = depthResults.find((result) => result.file === badPath);
+      assert.equal(match?.valid, false);
+      assert.match(match?.errors.join('; ') ?? '', /directly under a category directory/);
+    }
+    await fs.rm(rootLevelFile);
+    await fs.rm(nestedFile);
+
+    await fs.rm(wrongFilename);
+    const copyInStreaming = path.join(tempDir, 'streaming', 'netflix.json');
+    await fs.writeFile(copyInStreaming, JSON.stringify(baseProvider), 'utf8');
+    const duplicateProvider = structuredClone(baseProvider);
+    duplicateProvider.category = 'gaming';
+    await fs.writeFile(wrongCategoryDir, JSON.stringify(duplicateProvider), 'utf8');
+    const directoryResults = await validateProvidersDirectory(tempDir);
+    assert.equal(directoryResults.every((result) => result.valid === false), true);
+    assert.match(
+      directoryResults.flatMap((result) => result.errors).join('; '),
+      /duplicated across multiple files/
+    );
+  } finally {
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
 });

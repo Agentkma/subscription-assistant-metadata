@@ -55,7 +55,6 @@ interface ProviderPlanBase {
   price: PlanPrice;
   notes?: string;
   price_trend?: PriceTrend;
-  urls?: ProviderUrls;
 }
 
 export type ProviderPlan = ProviderPlanBase & (
@@ -72,14 +71,13 @@ export type ProviderPlan = ProviderPlanBase & (
 );
 
 export interface ProviderUrls {
+  official?: string | null;
   pricing?: string | null;
   cancellation?: string | null;
   help_center?: string | null;
 }
 
-export interface ProviderLevelUrls extends ProviderUrls {
-  official?: string | null;
-}
+export type ProviderLevelUrls = ProviderUrls;
 
 export interface PriceTrend {
   trend: TrendDirection;

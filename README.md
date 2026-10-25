@@ -27,7 +27,7 @@ The current phase keeps three seed provider records for manual verification and 
 
 The first maintenance automation is a read-only source health check. Run `npm run check:sources` locally or dispatch the monthly GitHub Actions workflow. It checks configured page and image URLs, reports access-blocked responses for manual review, and fails on definite errors. It does not extract prices, modify provider records, or publish a bundle.
 
-The planned extraction layer has two modes. Initial extraction uses an LLM to draft plans for new providers from human-verified URLs. Maintenance first checks deterministically that recorded plan names and prices still appear on the page; if they do, it refreshes `source.verified_at` without calling the LLM, which runs only on mismatches. All proposed changes go through PR review. See `plan-metadata.md` for the pipeline.
+The planned extraction layer has two modes. Initial extraction uses an LLM to draft plans for new providers from human-verified URLs. Maintenance first checks deterministically whether each recorded plan's verbatim `source.evidence` (or price and tier keywords on a manual seed) still appears on the page; if it does, it refreshes `source.verified_at` and the stored URL hash without calling the LLM, which runs only on mismatches or explicit plan-discovery sweeps. All proposed changes go through PR review. See `plan-metadata.md` for the pipeline.
 
 ## Metadata model
 
@@ -79,12 +79,12 @@ This repository is still pre-release: no public bundle has been published and no
 
 When the repo is explicitly marked ready for its first public release, establish initial `bundleVersion` and `schemaVersion` values and publish the first bundle. From then on, published versioning rules apply: metadata-only changes increment `bundleVersion`; breaking contract changes require a new major `schemaVersion` and coordination with downstream consumers before release.
 
-The planned publishing flow produces a single bundled JSON artifact and a separate version manifest, for example:
+The planned publishing flow produces a single bundled JSON artifact and a separate version manifest:
 
-- dist/metadata.bundle.json
-- dist/version.json
+- `dist/providers.json`
+- `dist/version.json`
 
-These files are served through GitHub Pages and consumed by the private app repository.
+These files are built deterministically on merge to `main`, served through GitHub Pages, and consumed by the private app repository.
 
 After the initial release, the repo uses a dual-version model:
 
@@ -96,25 +96,40 @@ This allows the consumer app to detect both data updates and compatibility-break
 ## Repo structure
 
 ```text
-src/
-  schema/
-  types/
-  validators/
-  builders/
-  utils/
-
-data/
+metadata/
   categories.json
-  subscriptions.json
+  providers/
+    <category>/
+      <provider_id>.json
+  history/                  (planned)
+    <provider_id>/
+      <plan_id>.json
 
-dist/
-  metadata.bundle.json
+pipeline-state/             (planned, internal only)
+  source-hashes.json
+
+src/
+  schema.ts
+  types.ts
+  validateProviders.ts
+  checkProviderSources.ts
+
+tests/
+  provider-validation.test.ts
+  provider-source-check.test.ts
+
+dist/                       (planned build output)
+  providers.json
   version.json
 
 .github/workflows/
-  publish-metadata.yml
+  validate.yml
+  check-provider-sources.yml
+  publish-metadata.yml      (planned)
 
 README.md
+plan-metadata.md
+provider-source-checklist.md
 package.json
 tsconfig.json
 ```
