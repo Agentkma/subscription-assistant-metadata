@@ -537,6 +537,12 @@ test('rejects verification dates in the future', async () => {
   );
 });
 
+test('forwards maxVerifiedAt when validating a provider file', async () => {
+  const result = await validateProviderFile(netflixFile, { maxVerifiedAt: '2000-01-01' });
+  assert.equal(result.valid, false);
+  assert.match(result.errors.join('; '), /must not be in the future/);
+});
+
 test('requires non-null evidence to contain the recorded price', async () => {
   const provider = await readProvider(netflixFile);
   provider.default.plans[0].source.evidence = 'Standard with ads: $9.99 / month';

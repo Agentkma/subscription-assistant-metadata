@@ -210,6 +210,7 @@ export async function validateProviderFile(
     }
 
     const semanticErrors = findProviderSemanticErrors(data as ProviderRecord, {
+      ...options,
       expectedProviderId,
       expectedCategory
     });
