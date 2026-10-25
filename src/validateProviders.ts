@@ -2,10 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { Ajv as JsonValidator, type ErrorObject } from 'ajv';
 import { fullFormats } from 'ajv-formats/dist/formats.js';
-import { isSupportedCurrencyCode, providerSchema, supportedCategories } from './schema.js';
+import { isSupportedCurrencyCode, providerSchema } from './schema.js';
 import type { ProviderPlan, ProviderRecord } from './types.js';
-
-const supportedCategorySet = new Set<string>(supportedCategories);
 
 const jsonValidator = new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true });
 jsonValidator.addFormat('uri', fullFormats.uri);
@@ -82,8 +80,7 @@ export async function validateProviderFile(
   const fullPath = path.resolve(filePath);
   const parentDir = path.basename(path.dirname(fullPath));
   const expectedProviderId = options.expectedProviderId ?? path.basename(fullPath, '.json');
-  const expectedCategory =
-    options.expectedCategory ?? (supportedCategorySet.has(parentDir) ? parentDir : undefined);
+  const expectedCategory = options.expectedCategory ?? parentDir;
 
   try {
     const raw = await fs.readFile(fullPath, 'utf8');
