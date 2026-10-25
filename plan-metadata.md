@@ -113,7 +113,7 @@ The app only loads and caches `logo.url`; a category-icon fallback is app-owned.
 
 Initially link directly to official-hosted images. Hosting approved copies can be considered later after checking redistribution permissions; official provenance is not permission to use or redistribute an asset.
 
-Future scripts resolve `app_store` sources through Apple's lookup API using the approved ID and applicable country (the seeds use `US`), then propose updated artwork URLs for review. Non-country region codes require an explicit country mapping before lookup. `official` sources support image health checks but replacement discovery stays manual. These scripts are deferred until the seeds are reviewed.
+Future scripts resolve `app_store` sources through Apple's lookup API using the approved ID and applicable country (the seeds use `US`) only during initial intake, when an existing `logo.url` fails image health checks, or during an explicit icon refresh, then propose updated artwork URLs for review. Because Apple's CDN keeps content-addressed artwork URLs live across app versions, working `logo.url` values are left untouched on regular runs to avoid noisy diffs and unnecessary client cache invalidation. Non-country region codes require an explicit country mapping before lookup. `official` sources support image health checks but replacement discovery stays manual. These scripts are deferred until the seeds are reviewed.
 
 ### Plan object
 
@@ -339,7 +339,7 @@ Provider and plan source URLs, official logo provenance pages, and App Store lis
    - The prompt requires standard, non-promotional recurring prices per `billing_cycle` (putting trials, intro promos, or monthly-equivalent breakdowns of annual plans in `notes`) and a verbatim `evidence` quote per plan.
    - Scripts reject any value whose `evidence` does not appear verbatim in the fetched text.
 6. Scripts validate the output: AJV schema, currency/billing-cycle checks, flag price changes > ~25%, flag removed plans, reject values missing evidence.
-7. Script checks provider URL availability, redirects, and expected content; fetches and decodes `logo.url` to check usable image content and dimensions; and proposes refreshed App Store artwork URLs from approved IDs. Retry transient errors and report blocked requests separately from broken URLs. HTTP 200 alone is not sufficient.
+7. Script checks provider URL availability, redirects, and expected content; fetches and decodes `logo.url` to check usable image content and dimensions; and queries Apple's lookup API to propose a refreshed App Store artwork URL from the approved `app_store_id` only if the current `logo.url` fails health checks (or an explicit icon refresh is requested). Retry transient errors and report blocked requests separately from broken URLs. HTTP 200 alone is not sufficient.
 8. Pipeline opens a PR with old → new values, evidence, and source URLs. Nothing auto-merges.
 9. On merge: build bundle, publish to GitHub Pages.
 
