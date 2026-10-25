@@ -3,7 +3,7 @@ import path from 'node:path';
 import { Ajv as JsonValidator, type ErrorObject } from 'ajv';
 import { fullFormats } from 'ajv-formats/dist/formats.js';
 import { isSupportedCurrencyCode, providerSchema } from './schema.js';
-import type { ProviderPlan, ProviderRecord } from './types.js';
+import type { ProviderOverride, ProviderPlan, ProviderRecord, SupportedRegion } from './types.js';
 
 const jsonValidator = new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true });
 jsonValidator.addFormat('uri', fullFormats.uri);
@@ -17,6 +17,10 @@ const formatValidationError = (error: ErrorObject): string => {
   return `${location} ${message}`;
 };
 
+export function findProviderSchemaErrors(data: unknown): string[] {
+  return validate(data) ? [] : (validate.errors ?? []).map(formatValidationError);
+}
+
 export interface ProviderValidationResult {
   file: string;
   valid: boolean;
@@ -26,6 +30,55 @@ export interface ProviderValidationResult {
 export interface ProviderSemanticOptions {
   expectedProviderId?: string;
   expectedCategory?: string;
+  /** Latest allowed `source.verified_at` (YYYY-MM-DD). Defaults to tomorrow in UTC. */
+  maxVerifiedAt?: string;
+}
+
+function defaultMaxVerifiedAt(): string {
+  // One day of slack so a reviewer ahead of UTC can record their local date.
+  return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+export function evidenceMentionsAmount(evidence: string, amount: number): boolean {
+  const candidates = new Set([amount.toFixed(2), String(amount)]);
+  return [...candidates].some((candidate) =>
+    new RegExp(`(?<![\\d.])${candidate.replace('.', '\\.')}(?!\\d|\\.\\d)`).test(evidence)
+  );
+}
+
+function findPlanSourceErrors(
+  plans: ProviderPlan[] | undefined,
+  location: string,
+  maxVerifiedAt: string
+): string[] {
+  const errors: string[] = [];
+
+  for (const [index, plan] of (plans ?? []).entries()) {
+    const planLocation = `${location}/${index}`;
+
+    if (plan.source.verified_at > maxVerifiedAt) {
+      errors.push(`${planLocation}/source/verified_at "${plan.source.verified_at}" must not be in the future`);
+    }
+
+    const { evidence } = plan.source;
+    if (evidence && !evidenceMentionsAmount(evidence, plan.price.amount)) {
+      errors.push(`${planLocation}/source/evidence must contain the recorded price ${plan.price.amount}`);
+    }
+  }
+
+  return errors;
+}
+
+function findUpgradePathErrors(
+  override: ProviderOverride | undefined,
+  knownPlanIds: Set<string>,
+  location: string
+): string[] {
+  return (override?.recommendations?.upgrade_paths ?? []).flatMap((upgradePath, index) =>
+    knownPlanIds.has(upgradePath.target_plan_id)
+      ? []
+      : [`${location}/recommendations/upgrade_paths/${index}/target_plan_id "${upgradePath.target_plan_id}" does not match any plan_id`]
+  );
 }
 
 function findDuplicatePlanIdErrors(plans: ProviderPlan[] | undefined, location: string): string[] {
@@ -56,10 +109,24 @@ export function findProviderSemanticErrors(
     errors.push(`/default_region "${provider.default_region}" must be included in /regions`);
   }
 
+  const maxVerifiedAt = options.maxVerifiedAt ?? defaultMaxVerifiedAt();
+  const defaultPlanIds = new Set(provider.default.plans.map((plan) => plan.plan_id));
+
   errors.push(...findDuplicatePlanIdErrors(provider.default.plans, '/default/plans'));
+  errors.push(...findPlanSourceErrors(provider.default.plans, '/default/plans', maxVerifiedAt));
+  errors.push(...findUpgradePathErrors(provider.default, defaultPlanIds, '/default'));
 
   for (const [region, override] of Object.entries(provider.regional_overrides)) {
-    errors.push(...findDuplicatePlanIdErrors(override?.plans, `/regional_overrides/${region}/plans`));
+    const location = `/regional_overrides/${region}`;
+
+    if (!provider.regions.includes(region as SupportedRegion)) {
+      errors.push(`${location} region "${region}" must be included in /regions`);
+    }
+
+    const regionalPlanIds = new Set([...defaultPlanIds, ...(override?.plans ?? []).map((plan) => plan.plan_id)]);
+    errors.push(...findDuplicatePlanIdErrors(override?.plans, `${location}/plans`));
+    errors.push(...findPlanSourceErrors(override?.plans, `${location}/plans`, maxVerifiedAt));
+    errors.push(...findUpgradePathErrors(override, regionalPlanIds, location));
   }
 
   if (options.expectedProviderId && provider.provider_id !== options.expectedProviderId) {
@@ -85,14 +152,10 @@ export async function validateProviderFile(
   try {
     const raw = await fs.readFile(fullPath, 'utf8');
     const data = JSON.parse(raw);
-    const valid = validate(data);
+    const schemaErrors = findProviderSchemaErrors(data);
 
-    if (!valid) {
-      return {
-        file: filePath,
-        valid: false,
-        errors: (validate.errors ?? []).map(formatValidationError)
-      };
+    if (schemaErrors.length > 0) {
+      return { file: filePath, valid: false, errors: schemaErrors };
     }
 
     const semanticErrors = findProviderSemanticErrors(data as ProviderRecord, {

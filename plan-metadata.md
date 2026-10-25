@@ -19,7 +19,7 @@ The repo is following an Agile vertical-slice approach: ship a minimal, end-to-e
 
 The active focus is:
 
-- manually verify the three seed provider records (URLs, plans, prices, and icons)
+- ~~manually verify the three seed provider records (URLs, plans, prices, and icons)~~ — done; seeds are `data-reviewed`
 - validate the recorded URLs and metadata against the schema and semantic rules
 - build a deterministic bundle generator (`dist/providers.json` + `dist/version.json`) and publish to GitHub Pages for the seed catalog
 - integrate the live seed bundle into the private SubSage app and incorporate any schema learnings while the catalog is only 3 files
@@ -426,7 +426,7 @@ No model is chosen yet; the seed trial (rollout step 3) selects it. The task is 
 
 ### Phase 3: Seed bundle generation and GitHub Pages publishing (Vertical Slice)
 
-- Manually verify the three seed provider files
+- ~~Manually verify the three seed provider files~~ — done
 - Merge active, reviewed provider files into a single `dist/providers.json` artifact
 - Emit `dist/version.json` with `bundleVersion` and `schemaVersion`
 - Add push-to-`main` publish workflow (`publish-metadata.yml`) that deterministically builds and publishes `dist/` to GitHub Pages
@@ -468,8 +468,8 @@ No model is chosen yet; the seed trial (rollout step 3) selects it. The task is 
 
 This repo will serve as the public metadata source of truth for SubSage and should remain intentionally narrow in scope. Following an Agile vertical-slice approach, the next implementation steps are to:
 
-1. finalize the initial schema and semantic validation rules,
-2. manually verify the three seed provider records (`netflix`, `amazon_prime_video`, `spotify`),
+1. ~~finalize the initial schema and semantic validation rules~~ (done),
+2. ~~manually verify the three seed provider records (`netflix`, `amazon_prime_video`, `spotify`)~~ (done),
 3. build the deterministic `dist/providers.json` + `dist/version.json` generator and publish the 3-provider bundle to GitHub Pages,
 4. build the private SubSage app against the live seed bundle and iterate on the schema based on real UI and App Store review feedback,
 5. build and validate the automated extraction pipeline against the verified seeds once the app contract is stable,

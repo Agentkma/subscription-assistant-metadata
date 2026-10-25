@@ -23,7 +23,7 @@ It does not contain:
 
 ## Current focus
 
-The current phase follows an Agile vertical-slice approach: manually verify the three seed provider records (Netflix, Amazon Prime Video, and Spotify), publish a minimal 3-provider bundle to GitHub Pages, and validate the metadata contract inside the private SubSage app and through App Store review before building the automated extraction pipeline or expanding the catalog. The other planned providers are tracked in `provider-source-checklist.md` and do not have active JSON records yet. Seed records are drafts until their URLs, plans, and prices have been checked; do not publish them as verified data before that review.
+The current phase follows an Agile vertical-slice approach: the three seed provider records (Netflix, Amazon Prime Video, and Spotify) have been manually verified, and the next steps are to publish a minimal 3-provider bundle to GitHub Pages and validate the metadata contract inside the private SubSage app and through App Store review before building the automated extraction pipeline or expanding the catalog. The other planned providers are tracked in `provider-source-checklist.md` and do not have active JSON records yet.
 
 The first maintenance automation is a read-only source health check. Run `npm run check:sources` locally or dispatch the monthly GitHub Actions workflow. It checks configured page and image URLs, reports access-blocked responses for manual review, and fails on definite errors. It does not extract prices, modify provider records, or publish a bundle.
 

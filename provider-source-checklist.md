@@ -1,6 +1,6 @@
 # Provider Source Data Checklist
 
-This checklist is the roadmap and source-URL tracker for all planned provider coverage. Netflix, Amazon Prime Video, and Spotify are seed candidates for manual verification and the first LLM extraction trial; they are not considered verified until a person checks their URLs, plans, and prices. The other planned providers remain backlog entries without active provider JSON files until the seed trial establishes the workflow.
+This checklist is the roadmap and source-URL tracker for all planned provider coverage. Netflix, Amazon Prime Video, and Spotify are the seed providers; their URLs, plans, and prices have been manually verified (`data-reviewed`), and they will serve as the baseline for the first LLM extraction trial. The other planned providers remain backlog entries without active provider JSON files until the seed trial establishes the workflow.
 
 ## Rules
 
@@ -175,7 +175,7 @@ These labels describe plan extraction eligibility. Icon health checks and approv
 
 ## Priority order
 
-Seed providers first (Netflix, Amazon Prime Video, one JS-heavy provider), then URL intake in this order:
+Seed providers first (Netflix, Amazon Prime Video, Spotify), then URL intake in this order:
 
 1. streaming
 2. music_audio
