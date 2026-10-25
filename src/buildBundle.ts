@@ -80,7 +80,7 @@ async function loadCategories(categoriesFile: string): Promise<CategoryInput[]> 
   return parsed;
 }
 
-// provider_count reflects published providers, not the planned coverage stored in categories.json.
+// provider_count is derived at build time; categories.json does not store it.
 function withPublishedProviderCounts(categories: CategoryInput[], providers: ProviderRecord[]): CategoryRecord[] {
   return categories.map(({ id, name, display_name }) => ({
     id,
