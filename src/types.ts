@@ -128,3 +128,25 @@ export interface ProviderRecord {
   default: ProviderDefault;
   regional_overrides: Partial<Record<SupportedRegion, ProviderOverride>>;
 }
+
+export interface CategoryRecord {
+  id: string;
+  name: string;
+  display_name: string;
+  provider_count: number;
+}
+
+export interface VersionManifest {
+  bundleVersion: string;
+  schemaVersion: string;
+  publishedAt: string;
+  gitSha: string;
+}
+
+export interface ProvidersBundle {
+  bundleVersion: string;
+  schemaVersion: string;
+  publishedAt: string;
+  categories: CategoryRecord[];
+  providers: ProviderRecord[];
+}

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "validate": "tsx src/validateProviders.ts",
+    "build": "tsx src/buildBundle.ts",
     "check:sources": "tsx src/checkProviderSources.ts",
     "test": "tsx --test",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\""
