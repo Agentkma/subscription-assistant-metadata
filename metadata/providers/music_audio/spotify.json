@@ -25,11 +25,13 @@
           "amount": 12.99,
           "currency": "USD"
         },
+        "notes": "Free for 2 months for eligible new subscribers, then $12.99/month.",
+        "url_visibility": "public",
         "source": {
           "url": "https://www.spotify.com/us/premium/#plans",
-          "verified_at": "2026-10-03",
+          "verified_at": "2026-10-25",
           "method": "manual",
-          "evidence": null
+          "evidence": "Individual $0 for 2 months $12.99 / month after"
         }
       },
       {
@@ -40,11 +42,12 @@
           "amount": 18.99,
           "currency": "USD"
         },
+        "url_visibility": "public",
         "source": {
           "url": "https://www.spotify.com/us/premium/#plans",
-          "verified_at": "2026-10-03",
+          "verified_at": "2026-10-25",
           "method": "manual",
-          "evidence": null
+          "evidence": "Duo $18.99 / month"
         }
       },
       {
@@ -55,11 +58,12 @@
           "amount": 21.99,
           "currency": "USD"
         },
+        "url_visibility": "public",
         "source": {
           "url": "https://www.spotify.com/us/premium/#plans",
-          "verified_at": "2026-10-03",
+          "verified_at": "2026-10-25",
           "method": "manual",
-          "evidence": null
+          "evidence": "Family $21.99 / month"
         }
       },
       {
@@ -70,18 +74,21 @@
           "amount": 6.99,
           "currency": "USD"
         },
+        "notes": "Free for 1 month for eligible students, then $6.99/month; includes access to Hulu (With Ads).",
+        "url_visibility": "public",
         "source": {
           "url": "https://www.spotify.com/us/premium/#plans",
-          "verified_at": "2026-10-03",
+          "verified_at": "2026-10-25",
           "method": "manual",
-          "evidence": null
+          "evidence": "Student $0 for 1 month $6.99 / month after"
         }
       }
     ],
     "urls": {
+      "official": "https://www.spotify.com/us/",
       "pricing": "https://www.spotify.com/us/premium/#plans",
-      "cancellation": "https://support.spotify.com/us/article/how-to-cancel-subscription/",
-      "help_center": "https://support.spotify.com/"
+      "cancellation": "https://support.spotify.com/us/article/cancel-premium/",
+      "help_center": "https://support.spotify.com/us/"
     }
   },
   "regional_overrides": {

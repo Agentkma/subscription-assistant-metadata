@@ -1,6 +1,6 @@
 # Provider Source Data Checklist
 
-This checklist is the roadmap and source-URL tracker for all planned provider coverage. Netflix, Amazon Prime Video, and Spotify are seed candidates for manual verification and the first LLM extraction trial; they are not considered verified until a person checks their URLs, plans, and prices. The other planned providers remain backlog entries without active provider JSON files until the seed trial establishes the workflow.
+This checklist is the roadmap and source-URL tracker for all planned provider coverage. Netflix, Amazon Prime Video, and Spotify are the seed providers; their URLs, plans, and prices have been manually verified (`data-reviewed`), and they will serve as the baseline for the first LLM extraction trial. The other planned providers remain backlog entries without active provider JSON files until the seed trial establishes the workflow.
 
 ## Rules
 
@@ -13,7 +13,7 @@ This checklist is the roadmap and source-URL tracker for all planned provider co
 - Do not publish seed records until their URLs, plans, and prices have been manually verified.
 - Every provider/plan URL (official, pricing, cancellation, help center, plan `source.url`) is verified by a human. The LLM never discovers or changes URLs.
 - Record one resolved HTTPS `logo.url` and one source: `app_store` with the approved listing's `app_store_id`, or `official` with a human-verified HTTPS provenance `url`. Prefer square app icons; do not populate multiple alternative sources.
-- Future deterministic App Store lookups may propose refreshed image URLs from approved listing IDs, with PR review. Official-asset replacements remain manual.
+- Future deterministic App Store lookups may propose refreshed image URLs from approved listing IDs only when the existing `logo.url` fails image health checks (or during initial intake / an explicit icon refresh), with PR review. Because Apple's CDN keeps content-addressed URLs live across app versions, do not churn working `logo.url` values on every lookup. Official-asset replacements remain manual.
 - Check icon identity, appearance, and usage permissions during intake. Official sourcing does not grant redistribution rights. The app owns category-icon fallback behavior.
 - Seed candidates are verified end to end by hand, including plans and prices, with `method: manual`. Record standard, non-promotional recurring prices per `billing_cycle` (put intro offers or monthly-equivalent breakdowns of annual plans in `notes`), and include a verbatim `source.evidence` snippet when practical so deterministic maintenance checks have an exact anchor.
 - After the seed trial, remaining providers receive human-verified URLs before plan/price extraction is attempted. Their first pass uses LLM initial extraction; drafts require `method: automated`, evidence quotes, and PR review.
@@ -75,7 +75,7 @@ Statuses: `seed-candidate` means selected for manual seed validation but not yet
 | music_audio | audible | Audible | queued |
 | music_audio | pandora | Pandora | queued |
 | music_audio | siriusxm | SiriusXM | queued |
-| music_audio | spotify | Spotify | seed-candidate |
+| music_audio | spotify | Spotify | data-reviewed |
 | music_audio | youtube_music | YouTube Music | queued |
 | news_reading | kindle_unlimited | Kindle Unlimited | queued |
 | news_reading | medium | Medium | queued |
@@ -103,13 +103,13 @@ Statuses: `seed-candidate` means selected for manual seed validation but not yet
 | shopping_memberships | sams_club_membership | Sam's Club Membership | queued |
 | shopping_memberships | uber_one | Uber One | queued |
 | shopping_memberships | walmartplus | Walmart+ | queued |
-| streaming | amazon_prime_video | Amazon Prime Video | seed-candidate |
+| streaming | amazon_prime_video | Amazon Prime Video | data-reviewed |
 | streaming | apple_tvplus | Apple TV+ | queued |
 | streaming | crunchyroll | Crunchyroll | queued |
 | streaming | disneyplus | Disney+ | queued |
 | streaming | hulu | Hulu | queued |
 | streaming | max | Max | queued |
-| streaming | netflix | Netflix | seed-candidate |
+| streaming | netflix | Netflix | data-reviewed |
 | streaming | paramountplus | Paramount+ | queued |
 | streaming | peacock | Peacock | queued |
 | streaming | showtime | Showtime | queued |
@@ -130,7 +130,9 @@ Statuses: `seed-candidate` means selected for manual seed validation but not yet
 
 | Provider | Category | Official site | Pricing page | Cancellation page | Help center | Icon URL | Icon source type | App Store ID or official provenance URL | Verified at | Automation | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Example only: Netflix | streaming | https://www.netflix.com | https://help.netflix.com/en/node/24926 | https://help.netflix.com/en/node/407 | https://help.netflix.com | Copy resolved artwork URL after verification | app_store | 363590051 |  |  | template | Example links are not verification evidence |
+| Netflix | streaming | https://www.netflix.com | https://help.netflix.com/en/node/24926 | https://help.netflix.com/en/node/407 | https://help.netflix.com/en | https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/cd/76/f9/cd76f98c-0811-0a8c-7587-715d38832dc9/AppIcon-0-0-1x_U007epad-0-1-0-sRGB-0-85-220.png/512x512bb.jpg | app_store | 363590051 | 2026-10-25 | auto-eligible | data-reviewed | Help center article lists all 3 US plans in static HTML |
+| Amazon Prime Video | streaming | https://www.amazon.com/primevideo | https://www.amazon.com/amazonprime | https://www.primevideo.com/help?nodeId=GWGDSNXVPJ93UW5V | https://www.primevideo.com/region/na/help | https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/36/ae/4c/36ae4c07-4a4d-8870-d7bc-e4329b9fe281/AppIcon-0-0-1x_U007epad-0-1-0-0-85-220.png/512x512bb.jpg | app_store | 545519333 | 2026-10-25 | auto-eligible | data-reviewed | Prime Monthly ($14.99) and Annual ($139) public; Prime Video Ultra ad-free upgrade ($4.99) is account_required and stays manual |
+| Spotify | music_audio | https://www.spotify.com/us/ | https://www.spotify.com/us/premium/#plans | https://support.spotify.com/us/article/cancel-premium/ | https://support.spotify.com/us/ | https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/5f/b6/e0/5fb6e0c6-cea6-e107-8d54-8e8fcec573ce/AppIcon-0-0-1x_U007epad-0-1-0-0-sRGB-85-220.png/512x512bb.jpg | app_store | 324684580 | 2026-10-25 | auto-eligible | data-reviewed | Individual ($12.99), Duo ($18.99), Family ($21.99), Student ($6.99) verified |
 
 ## Collection workflow
 
@@ -160,8 +162,10 @@ Statuses: `seed-candidate` means selected for manual seed validation but not yet
 
 These labels describe plan extraction eligibility. Icon health checks and approved-ID App Store lookups can be assessed independently, subject to source terms and access restrictions.
 
-- `auto-eligible`: public, static pricing page; can be monitored by the scheduled pipeline
-- `manual-only`: JS-heavy, bot-blocked, terms-restricted, or account-gated; re-verify by hand when flagged stale
+- `auto-eligible`: public, static pricing page; its public plans can be monitored by the scheduled pipeline
+- `manual-only`: JS-heavy, bot-blocked, terms-restricted, or every plan is account-gated; re-verify by hand when flagged stale
+
+An `account_required` plan is always manual, even inside an `auto-eligible` provider; the schema rejects `source.method: automated` on those plans.
 
 ## Working status legend
 
@@ -173,7 +177,7 @@ These labels describe plan extraction eligibility. Icon health checks and approv
 
 ## Priority order
 
-Seed providers first (Netflix, Amazon Prime Video, one JS-heavy provider), then URL intake in this order:
+Seed providers first (Netflix, Amazon Prime Video, Spotify), then URL intake in this order:
 
 1. streaming
 2. music_audio

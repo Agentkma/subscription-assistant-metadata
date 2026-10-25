@@ -25,13 +25,13 @@
           "amount": 14.99,
           "currency": "USD"
         },
-        "notes": "Prime Video bundled with Amazon Prime membership.",
+        "notes": "Prime Video bundled with Amazon Prime membership. Free trial for eligible new members, then $14.99/month.",
         "url_visibility": "public",
         "source": {
           "url": "https://www.amazon.com/amazonprime",
-          "verified_at": "2026-10-03",
+          "verified_at": "2026-10-25",
           "method": "manual",
-          "evidence": null
+          "evidence": "Prime Monthly $14.99 per month after trial"
         }
       },
       {
@@ -42,13 +42,13 @@
           "amount": 139,
           "currency": "USD"
         },
-        "notes": "Annual Amazon Prime membership that includes Prime Video.",
+        "notes": "Annual Amazon Prime membership that includes Prime Video. Free trial for eligible new members, then $139/year.",
         "url_visibility": "public",
         "source": {
           "url": "https://www.amazon.com/amazonprime",
-          "verified_at": "2026-10-03",
+          "verified_at": "2026-10-25",
           "method": "manual",
-          "evidence": null
+          "evidence": "Prime Annual $139 per year after trial"
         }
       },
       {
@@ -64,13 +64,14 @@
         "access_hint": "In Prime Video, open Your Account, select Go Ad Free, then select Start Subscription.",
         "source": {
           "url": null,
-          "verified_at": "2026-10-03",
+          "verified_at": "2026-10-25",
           "method": "manual",
           "evidence": null
         }
       }
     ],
     "urls": {
+      "official": "https://www.amazon.com/primevideo",
       "pricing": "https://www.amazon.com/amazonprime",
       "cancellation": "https://www.primevideo.com/help?nodeId=GWGDSNXVPJ93UW5V",
       "help_center": "https://www.primevideo.com/region/na/help"

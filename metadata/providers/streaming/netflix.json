@@ -25,11 +25,12 @@
           "amount": 8.99,
           "currency": "USD"
         },
+        "url_visibility": "public",
         "source": {
-          "url": "https://www.netflix.com/signup",
-          "verified_at": "2026-10-03",
+          "url": "https://help.netflix.com/en/node/24926",
+          "verified_at": "2026-10-25",
           "method": "manual",
-          "evidence": null
+          "evidence": "Standard with ads: $8.99 / month"
         }
       },
       {
@@ -40,11 +41,12 @@
           "amount": 19.99,
           "currency": "USD"
         },
+        "url_visibility": "public",
         "source": {
-          "url": "https://www.netflix.com/signup",
-          "verified_at": "2026-10-03",
+          "url": "https://help.netflix.com/en/node/24926",
+          "verified_at": "2026-10-25",
           "method": "manual",
-          "evidence": null
+          "evidence": "Standard: $19.99 / month"
         }
       },
       {
@@ -55,18 +57,20 @@
           "amount": 26.99,
           "currency": "USD"
         },
+        "url_visibility": "public",
         "source": {
-          "url": "https://www.netflix.com/signup",
-          "verified_at": "2026-10-03",
+          "url": "https://help.netflix.com/en/node/24926",
+          "verified_at": "2026-10-25",
           "method": "manual",
-          "evidence": null
+          "evidence": "Premium: $26.99 / month"
         }
       }
     ],
     "urls": {
-      "pricing": "https://www.netflix.com/signup",
-      "cancellation": "https://help.netflix.com/en/node/407?q=cancel",
-      "help_center": "https://help.netflix.com/"
+      "official": "https://www.netflix.com",
+      "pricing": "https://help.netflix.com/en/node/24926",
+      "cancellation": "https://help.netflix.com/en/node/407",
+      "help_center": "https://help.netflix.com/en"
     }
   },
   "regional_overrides": {

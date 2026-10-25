@@ -15,16 +15,16 @@ Build a public metadata repository for SubSage that publishes a single, versione
 
 ## Current implementation focus
 
-The repo is in a seed-first intake phase. Keep Netflix, Amazon Prime Video, and Spotify as the only active provider records while their URLs, plans, and prices are manually verified. Track all remaining provider coverage in `provider-source-checklist.md` without scaffold JSON files. A read-only source health check is implemented for manual and monthly runs; automated plan extraction and metadata updates remain deferred until seed data is verified.
+The repo is following an Agile vertical-slice approach: ship a minimal, end-to-end metadata bundle with the three seed providers (Netflix, Amazon Prime Video, and Spotify) first so the private SubSage app can be built, tested in TestFlight, and validated through App Store review before investing in the automated extraction pipeline or 80+ provider intake. Track all remaining provider coverage in `provider-source-checklist.md` without scaffold JSON files. A read-only source health check (`npm run check:sources`) is implemented for manual and monthly runs; automated plan extraction and full catalog expansion are intentionally deferred until the app's runtime contract is proven in production.
 
 The active focus is:
 
-- confirm the canonical category catalog and coverage targets
-- define the provider source checklist for every target provider
-- gather official pricing, help, cancellation, and logo sources
-- validate the recorded URLs and metadata against the schema
+- ~~manually verify the three seed provider records (URLs, plans, prices, and icons)~~ — done; seeds are `data-reviewed`
+- validate the recorded URLs and metadata against the schema and semantic rules
+- build a deterministic bundle generator (`dist/providers.json` + `dist/version.json`) and publish to GitHub Pages for the seed catalog
+- integrate the live seed bundle into the private SubSage app and incorporate any schema learnings while the catalog is only 3 files
 - run read-only source health checks against approved URLs without changing provider data
-- postpone automated plan extraction and provider-data updates until the source data is complete and verified
+- defer the automated extraction pipeline and bulk provider intake until after the private app's initial build and App Store feedback
 
 ## Core product context
 
@@ -113,7 +113,7 @@ The app only loads and caches `logo.url`; a category-icon fallback is app-owned.
 
 Initially link directly to official-hosted images. Hosting approved copies can be considered later after checking redistribution permissions; official provenance is not permission to use or redistribute an asset.
 
-Future scripts resolve `app_store` sources through Apple's lookup API using the approved ID and applicable country (the seeds use `US`), then propose updated artwork URLs for review. Non-country region codes require an explicit country mapping before lookup. `official` sources support image health checks but replacement discovery stays manual. These scripts are deferred until the seeds are reviewed.
+Future scripts resolve `app_store` sources through Apple's lookup API using the approved ID and applicable country (the seeds use `US`) only during initial intake, when an existing `logo.url` fails image health checks, or during an explicit icon refresh, then propose updated artwork URLs for review. Because Apple's CDN keeps content-addressed artwork URLs live across app versions, working `logo.url` values are left untouched on regular runs to avoid noisy diffs and unnecessary client cache invalidation. Non-country region codes require an explicit country mapping before lookup. `official` sources support image health checks but replacement discovery stays manual. These scripts are deferred until the seeds are reviewed.
 
 ### Plan object
 
@@ -339,7 +339,7 @@ Provider and plan source URLs, official logo provenance pages, and App Store lis
    - The prompt requires standard, non-promotional recurring prices per `billing_cycle` (putting trials, intro promos, or monthly-equivalent breakdowns of annual plans in `notes`) and a verbatim `evidence` quote per plan.
    - Scripts reject any value whose `evidence` does not appear verbatim in the fetched text.
 6. Scripts validate the output: AJV schema, currency/billing-cycle checks, flag price changes > ~25%, flag removed plans, reject values missing evidence.
-7. Script checks provider URL availability, redirects, and expected content; fetches and decodes `logo.url` to check usable image content and dimensions; and proposes refreshed App Store artwork URLs from approved IDs. Retry transient errors and report blocked requests separately from broken URLs. HTTP 200 alone is not sufficient.
+7. Script checks provider URL availability, redirects, and expected content; fetches and decodes `logo.url` to check usable image content and dimensions; and queries Apple's lookup API to propose a refreshed App Store artwork URL from the approved `app_store_id` only if the current `logo.url` fails health checks (or an explicit icon refresh is requested). Retry transient errors and report blocked requests separately from broken URLs. HTTP 200 alone is not sufficient.
 8. Pipeline opens a PR with old → new values, evidence, and source URLs. Nothing auto-merges.
 9. On merge: build bundle, publish to GitHub Pages.
 
@@ -393,13 +393,15 @@ No model is chosen yet; the seed trial (rollout step 3) selects it. The task is 
 
 ### Rollout order
 
-1. Finish manual verification and reviewer sign-off for the three seed providers. Confirm their records and checklist statuses are accurate; these become the ground truth for extraction.
-2. Keep the read-only source health check running manually or monthly. Fix or manually review definite failures; treat blocked responses as inconclusive.
-3. Build the local extraction-and-diff pipeline for seed sources: fetch approved URLs → deterministic presence check → LLM extraction on mismatch or in initial-extraction mode → validate against schema and sanity rules → produce a reviewable draft. Tune initial extraction until it reproduces the verified seeds, and confirm the presence check passes on them without calling the LLM.
-4. Add a GitHub Actions draft workflow that opens a PR for proposed base-plan changes. It must never auto-merge or discover/change source URLs. Keep account-gated plans manual-only.
-5. Intake human-verified URLs and logo sources for remaining providers, then run reviewed first passes by category. Mark unsuitable providers `manual-only`.
-6. Add scheduled change detection and re-extraction only after draft quality and review flow are reliable.
-7. Defer price-trend calculation and LLM-drafted recommendations/intelligence until base-data history and extraction are established; keep all such changes human-reviewed.
+1. Finish manual verification and reviewer sign-off for the three seed providers (`netflix`, `amazon_prime_video`, `spotify`). Confirm their records and checklist statuses are accurate.
+2. Build the deterministic bundle generator (`dist/providers.json` and `dist/version.json`) and the push-to-`main` GitHub Pages publish workflow (`publish-metadata.yml`) for the verified seed catalog.
+3. Build and ship the initial vertical slice of the private SubSage app against the live 3-provider bundle (including custom subscription entry, offline fallback, and version checks). Feed any UI or App Store review learnings back into the schema while only 3 provider files exist (and optionally top up to ~10–15 manually verified providers if needed for App Store submission).
+4. Keep the read-only source health check running manually or monthly. Fix or manually review definite failures; treat blocked responses as inconclusive.
+5. Once the app contract is proven in a real build, build the local extraction-and-diff pipeline for seed sources: fetch approved URLs → deterministic presence check → LLM extraction on mismatch or in initial-extraction mode → validate against schema and sanity rules → produce a reviewable draft. Tune initial extraction until it reproduces the verified seeds, and confirm the presence check passes on them without calling the LLM.
+6. Add a GitHub Actions draft workflow that opens a PR for proposed base-plan changes. It must never auto-merge or discover/change source URLs. Keep account-gated plans manual-only.
+7. Intake human-verified URLs and logo sources for remaining providers, then run reviewed first passes by category. Mark unsuitable providers `manual-only`.
+8. Add scheduled change detection and re-extraction only after draft quality and review flow are reliable.
+9. Defer price-trend calculation and LLM-drafted recommendations/intelligence until base-data history and extraction are established; keep all such changes human-reviewed.
 
 ## Starter implementation phases
 
@@ -422,24 +424,27 @@ No model is chosen yet; the seed trial (rollout step 3) selects it. The task is 
   - required HTTPS logo image URL and exactly one supported source record, including regional overrides
 - Add CI validation step
 
-### Phase 3: External enrichment and public price trend computation
+### Phase 3: Seed bundle generation and GitHub Pages publishing (Vertical Slice)
 
-- Follows the rollout order in "Automated update strategy"
-- Seed providers verified by hand first; extraction pipeline tested against them
-- Humans verify all URLs; LLM API extraction drafts plans/prices from those URLs, with evidence and PR review
+- ~~Manually verify the three seed provider files~~ — done
+- Merge active, reviewed provider files into a single `dist/providers.json` artifact
+- Emit `dist/version.json` with `bundleVersion` and `schemaVersion`
+- Add push-to-`main` publish workflow (`publish-metadata.yml`) that deterministically builds and publishes `dist/` to GitHub Pages
+
+### Phase 4: Private app integration and contract validation
+
+- Consume the live 3-provider bundle in the private SubSage app
+- Validate schema ergonomics, icon rendering/fallbacks, and App Store review requirements
+- Refine the schema while the catalog is small; optionally add a small batch of manually verified providers for initial App Store launch
+
+### Phase 5: Automated extraction pipeline and catalog expansion
+
+- Follows steps 5–9 in "Rollout order" under "Automated update strategy"
+- Test extraction pipeline against the verified seeds
+- Humans verify all URLs; LLM API extraction drafts plans/prices for new providers from those URLs, with evidence and PR review
+- Add scheduled/manual extraction workflow that opens a PR with diffs and evidence for human review before merge
 - Compute optional plan-level price trends from verified public price history
 - Draft public insight and recommendation values against the rubric; require human review
-
-### Phase 4: Bundle generation
-
-- Merge provider files into a single dist/providers.json artifact
-- Emit version.json with bundleVersion and schemaVersion
-- Run final quality checks before publish
-
-### Phase 5: Publishing and review
-
-- Add scheduled/manual extraction workflow that opens a PR with diffs and evidence for human review before merge
-- Add push-to-`main` publish workflow that deterministically builds and publishes `dist/providers.json` and `dist/version.json` to GitHub Pages
 
 ### Phase 6: Documentation and maintainability
 
@@ -461,15 +466,15 @@ No model is chosen yet; the seed trial (rollout step 3) selects it. The task is 
 
 ## Current working plan
 
-This repo will serve as the public metadata source of truth for SubSage and should remain intentionally narrow in scope. The next implementation steps are to:
+This repo will serve as the public metadata source of truth for SubSage and should remain intentionally narrow in scope. Following an Agile vertical-slice approach, the next implementation steps are to:
 
-1. finalize the public factual metadata schema and types,
-2. keep only the three seed provider records active and manually verify them,
-3. build and validate the extraction pipeline against the verified seeds,
-4. record human-verified URLs for remaining providers in the checklist,
-5. add provider records in reviewed category batches and enable scheduled updates,
-6. generate the single dist/providers.json bundle from active, reviewed records, and
-7. document the versioning and release contract.
+1. ~~finalize the initial schema and semantic validation rules~~ (done),
+2. ~~manually verify the three seed provider records (`netflix`, `amazon_prime_video`, `spotify`)~~ (done),
+3. build the deterministic `dist/providers.json` + `dist/version.json` generator and publish the 3-provider bundle to GitHub Pages,
+4. build the private SubSage app against the live seed bundle and iterate on the schema based on real UI and App Store review feedback,
+5. build and validate the automated extraction pipeline against the verified seeds once the app contract is stable,
+6. record human-verified URLs for remaining providers in the checklist, and
+7. add provider records in reviewed category batches and enable scheduled updates.
 
 ## Notes for future edits
 

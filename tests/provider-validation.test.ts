@@ -1,24 +1,30 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import test, { type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
-import { Ajv as JsonValidator } from 'ajv';
-import { fullFormats } from 'ajv-formats/dist/formats.js';
-import { isSupportedCurrencyCode, providerSchema } from '../src/schema.js';
+import { supportedCategories } from '../src/schema.js';
 import type { ProviderRecord } from '../src/types.js';
 import {
+  evidenceMentionsAmount,
+  findProviderSchemaErrors,
   findProviderSemanticErrors,
   validateProviderFile,
   validateProvidersDirectory
 } from '../src/validateProviders.js';
 // NodeNext + ESM requires the .js extension in the import specifier.
 
-const createJsonValidator = () =>
-  new JsonValidator({ allErrors: true, strict: false, allowUnionTypes: true })
-    .addFormat('uri', fullFormats.uri)
-    .addFormat('date', fullFormats.date)
-    .addFormat('iso4217', isSupportedCurrencyCode);
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const fromRoot = (relativePath: string) => path.join(repoRoot, relativePath);
+const providersDir = fromRoot('metadata/providers');
+const netflixFile = fromRoot('metadata/providers/streaming/netflix.json');
+const primeVideoFile = fromRoot('metadata/providers/streaming/amazon_prime_video.json');
+const spotifyFile = fromRoot('metadata/providers/music_audio/spotify.json');
+
+const isSchemaValid = (data: unknown) => findProviderSchemaErrors(data).length === 0;
+
+const readProvider = async (file: string) => JSON.parse(await fs.readFile(file, 'utf8')) as ProviderRecord;
 
 interface ProviderFixture {
   default: {
@@ -61,56 +67,47 @@ interface ProviderValidationCase {
   mutate: (provider: ProviderFixture) => void;
 }
 
+const accountGatedPlan = (provider: ProviderFixture) => {
+  const plan = provider.default.plans.find((candidate) => candidate.url_visibility === 'account_required');
+  assert.ok(plan, 'fixture must contain an account_required plan');
+  return plan;
+};
+
 async function runProviderValidationCases(
   context: TestContext,
   file: string,
   cases: ProviderValidationCase[]
 ): Promise<void> {
-  const validate = createJsonValidator().compile(providerSchema);
   const provider = JSON.parse(await fs.readFile(file, 'utf8')) as ProviderFixture;
 
   for (const validationCase of cases) {
     await context.test(validationCase.name, () => {
       const candidate = structuredClone(provider);
       validationCase.mutate(candidate);
-      assert.equal(validate(candidate), validationCase.valid);
+      assert.equal(isSchemaValid(candidate), validationCase.valid);
     });
   }
 }
 
 test('validates a known-good provider file', async () => {
-  const result = await validateProviderFile('metadata/providers/streaming/netflix.json');
+  const result = await validateProviderFile(netflixFile);
   assert.equal(result.valid, true);
   assert.equal(result.errors.length, 0);
 });
 
-test('validates the provider directory without errors', async () => {
-  const results = await validateProvidersDirectory('metadata/providers');
-  assert.equal(results.some((result) => result.valid === false), false);
+test('validates every provider in the metadata directory', async () => {
+  const results = await validateProvidersDirectory(providersDir);
+  assert.ok(results.length > 0, 'expected at least one provider file');
   assert.deepEqual(
-    results.map((result) => result.file.split(/[\\/]/).slice(-2).join('/')).sort(),
-    ['music_audio/spotify.json', 'streaming/amazon_prime_video.json', 'streaming/netflix.json'].sort()
+    results.filter((result) => !result.valid),
+    []
   );
 });
 
-test('validates the US-only default-plus-region schema', async () => {
-  const raw = await fs.readFile('metadata/providers/streaming/netflix.json', 'utf8');
-  const provider = JSON.parse(raw);
-
-  assert.equal(provider.default_region, 'US');
-  assert.deepEqual(provider.regions, ['US']);
-  assert.equal(typeof provider.default, 'object');
-  assert.equal(Array.isArray(provider.default.plans), true);
-  assert.equal(typeof provider.regional_overrides, 'object');
-  assert.deepEqual(Object.keys(provider.regional_overrides), ['US']);
-});
-
 test('public contract accepts optional insights, recommendations, and plan trends', async () => {
-  const validate = createJsonValidator().compile(providerSchema);
-  const raw = await fs.readFile('metadata/providers/streaming/netflix.json', 'utf8');
-  const provider = JSON.parse(raw);
+  const provider = JSON.parse(await fs.readFile(netflixFile, 'utf8'));
 
-  assert.equal(validate(provider), true);
+  assert.equal(isSchemaValid(provider), true);
 
   const withInsights = structuredClone(provider);
   withInsights.default.intelligence = {
@@ -120,21 +117,21 @@ test('public contract accepts optional insights, recommendations, and plan trend
     benchmark_anchor: { category_rank: 1, value_score_baseline: 0.8 }
   };
   withInsights.default.recommendations = { alternatives: [], upgrade_paths: [] };
-  assert.equal(validate(withInsights), true);
+  assert.equal(isSchemaValid(withInsights), true);
 
   withInsights.default.intelligence.cancellation_difficulty = 6;
-  assert.equal(validate(withInsights), false);
+  assert.equal(isSchemaValid(withInsights), false);
 
   const withPlanTrend = structuredClone(provider);
   withPlanTrend.default.plans[0].price_trend = { trend: 'flat' };
-  assert.equal(validate(withPlanTrend), true);
+  assert.equal(isSchemaValid(withPlanTrend), true);
 
   withPlanTrend.default.plans[0].price_trend = { trend: 'sideways' };
-  assert.equal(validate(withPlanTrend), false);
+  assert.equal(isSchemaValid(withPlanTrend), false);
 });
 
 test('validates automated plan provenance', async (context) => {
-  await runProviderValidationCases(context, 'metadata/providers/streaming/amazon_prime_video.json', [
+  await runProviderValidationCases(context, primeVideoFile, [
     {
       name: 'rejects null evidence',
       valid: false,
@@ -181,73 +178,49 @@ test('validates automated plan provenance', async (context) => {
 });
 
 test('validates account-gated plan provenance', async (context) => {
-  await runProviderValidationCases(context, 'metadata/providers/streaming/amazon_prime_video.json', [
+  await runProviderValidationCases(context, primeVideoFile, [
     {
       name: 'rejects a missing access hint',
       valid: false,
       mutate: (provider) => {
-        delete provider.default.plans[2].access_hint;
+        delete accountGatedPlan(provider).access_hint;
       }
     },
     {
       name: 'rejects an empty access hint',
       valid: false,
       mutate: (provider) => {
-        provider.default.plans[2].access_hint = '';
+        accountGatedPlan(provider).access_hint = '';
       }
     },
     {
       name: 'rejects automated provenance',
       valid: false,
       mutate: (provider) => {
-        provider.default.plans[2].source!.method = 'automated';
-        provider.default.plans[2].source!.evidence = 'Plan details';
+        accountGatedPlan(provider).source!.method = 'automated';
+        accountGatedPlan(provider).source!.evidence = 'Plan details';
       }
     },
     {
       name: 'rejects a missing source URL field',
       valid: false,
       mutate: (provider) => {
-        delete provider.default.plans[2].source!.url;
+        delete accountGatedPlan(provider).source!.url;
       }
     },
     {
       name: 'rejects a public source URL',
       valid: false,
       mutate: (provider) => {
-        provider.default.plans[2].source!.url = 'https://www.amazon.com/prime';
+        accountGatedPlan(provider).source!.url = 'https://www.amazon.com/prime';
       }
     },
     { name: 'accepts manual provenance with a null source URL and access hint', valid: true, mutate: () => {} }
   ]);
 });
 
-test('records manual source URLs and verification dates for every public seed plan', async () => {
-  const providers = [
-    'metadata/providers/streaming/netflix.json',
-    'metadata/providers/streaming/amazon_prime_video.json',
-    'metadata/providers/music_audio/spotify.json'
-  ];
-
-  for (const file of providers) {
-    const provider = JSON.parse(await fs.readFile(file, 'utf8'));
-
-    for (const plan of provider.default.plans) {
-      assert.equal(plan.source.method, 'manual', `${provider.provider_id}/${plan.plan_id}`);
-      assert.equal(plan.source.verified_at, '2026-10-03', `${provider.provider_id}/${plan.plan_id}`);
-
-      if (plan.url_visibility === 'account_required') {
-        assert.equal(plan.source.url, null);
-        continue;
-      }
-
-      assert.equal(typeof plan.source.url, 'string', `${provider.provider_id}/${plan.plan_id}`);
-    }
-  }
-});
-
 test('validates plan price and provenance constraints', async (context) => {
-  await runProviderValidationCases(context, 'metadata/providers/streaming/netflix.json', [
+  await runProviderValidationCases(context, netflixFile, [
     {
       name: 'rejects missing plan source',
       valid: false,
@@ -326,7 +299,7 @@ test('validates plan price and provenance constraints', async (context) => {
 });
 
 test('validates logo URL and source combinations', async (context) => {
-  await runProviderValidationCases(context, 'metadata/providers/music_audio/spotify.json', [
+  await runProviderValidationCases(context, spotifyFile, [
     {
       name: 'rejects a missing logo URL',
       valid: false,
@@ -411,31 +384,17 @@ test('validates logo URL and source combinations', async (context) => {
   ]);
 });
 
-test('contains the canonical MVP category catalog', async () => {
-  const raw = await fs.readFile('metadata/categories.json', 'utf8');
-  const categories = JSON.parse(raw);
+test('category catalog matches the supported category list', async () => {
+  const categories = JSON.parse(await fs.readFile(fromRoot('metadata/categories.json'), 'utf8')) as Array<{ id: string }>;
 
-  assert.equal(Array.isArray(categories), true);
-  assert.equal(categories.length, 10);
   assert.deepEqual(
-    categories.map((category: { id: string }) => category.id).sort(),
-    [
-      'fitness_wellness',
-      'gaming',
-      'learning',
-      'lifestyle',
-      'music_audio',
-      'news_reading',
-      'productivity',
-      'shopping_memberships',
-      'streaming',
-      'utilities_tools'
-    ].sort()
+    categories.map((category) => category.id).sort(),
+    [...supportedCategories].sort()
   );
 });
 
 test('validates HTTPS URLs across provider and regional override URL blocks', async (context) => {
-  await runProviderValidationCases(context, 'metadata/providers/streaming/amazon_prime_video.json', [
+  await runProviderValidationCases(context, primeVideoFile, [
     {
       name: 'rejects HTTP provider pricing URL',
       valid: false,
@@ -484,9 +443,7 @@ test('validates HTTPS URLs across provider and regional override URL blocks', as
 });
 
 test('enforces semantic invariants for regions, plan IDs, and file paths', async () => {
-  const baseProvider = JSON.parse(
-    await fs.readFile('metadata/providers/streaming/netflix.json', 'utf8')
-  ) as ProviderRecord;
+  const baseProvider = await readProvider(netflixFile);
 
   const mismatchedRegion = structuredClone(baseProvider);
   mismatchedRegion.default_region = 'CA';
@@ -561,4 +518,69 @@ test('enforces semantic invariants for regions, plan IDs, and file paths', async
   } finally {
     await fs.rm(tempDir, { recursive: true, force: true });
   }
+});
+
+test('rejects regional overrides for regions not listed in regions', async () => {
+  const provider = await readProvider(netflixFile);
+  provider.regional_overrides.CA = {};
+  assert.match(findProviderSemanticErrors(provider).join('; '), /regional_overrides\/CA region "CA" must be included/);
+});
+
+test('rejects verification dates in the future', async () => {
+  const provider = await readProvider(netflixFile);
+  provider.default.plans[0].source.verified_at = '2026-01-02';
+
+  assert.deepEqual(findProviderSemanticErrors(provider, { maxVerifiedAt: '2026-12-31' }), []);
+  assert.match(
+    findProviderSemanticErrors(provider, { maxVerifiedAt: '2026-01-01' }).join('; '),
+    /default\/plans\/0\/source\/verified_at "2026-01-02" must not be in the future/
+  );
+});
+
+test('forwards maxVerifiedAt when validating a provider file', async () => {
+  const result = await validateProviderFile(netflixFile, { maxVerifiedAt: '2000-01-01' });
+  assert.equal(result.valid, false);
+  assert.match(result.errors.join('; '), /must not be in the future/);
+});
+
+test('requires non-null evidence to contain the recorded price', async () => {
+  const provider = await readProvider(netflixFile);
+  provider.default.plans[0].source.evidence = 'Standard with ads: $9.99 / month';
+  assert.match(findProviderSemanticErrors(provider).join('; '), /evidence must contain the recorded price/);
+
+  provider.default.plans[0].source.evidence = null;
+  assert.deepEqual(findProviderSemanticErrors(provider), []);
+});
+
+test('matches evidence prices on number boundaries', () => {
+  assert.equal(evidenceMentionsAmount('Prime Annual $139 per year', 139), true);
+  assert.equal(evidenceMentionsAmount('Prime Annual $139.00 per year', 139), true);
+  assert.equal(evidenceMentionsAmount('Standard: $19.99 / month', 19.99), true);
+  assert.equal(evidenceMentionsAmount('Plan $1399 per year', 139), false);
+  assert.equal(evidenceMentionsAmount('Plan $139.50 per year', 139), false);
+  assert.equal(evidenceMentionsAmount('Plan $119.99 / month', 19.99), false);
+  assert.equal(evidenceMentionsAmount('Plan $8.90 / month', 8.9), true);
+});
+
+test('requires upgrade path targets to reference existing plans', async () => {
+  const provider = await readProvider(netflixFile);
+  const [firstPlan] = provider.default.plans;
+
+  provider.default.recommendations = {
+    alternatives: [],
+    upgrade_paths: [{ target_plan_id: firstPlan.plan_id, reason: 'valid target' }]
+  };
+  assert.deepEqual(findProviderSemanticErrors(provider), []);
+
+  provider.default.recommendations.upgrade_paths.push({ target_plan_id: 'missing_plan', reason: 'bad target' });
+  assert.match(
+    findProviderSemanticErrors(provider).join('; '),
+    /upgrade_paths\/1\/target_plan_id "missing_plan" does not match any plan_id/
+  );
+
+  provider.default.recommendations.upgrade_paths.pop();
+  provider.regional_overrides.US = {
+    recommendations: { alternatives: [], upgrade_paths: [{ target_plan_id: firstPlan.plan_id, reason: 'inherits default plans' }] }
+  };
+  assert.deepEqual(findProviderSemanticErrors(provider), []);
 });

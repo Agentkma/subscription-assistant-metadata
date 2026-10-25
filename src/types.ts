@@ -53,7 +53,7 @@ interface ProviderPlanBase {
   name: string;
   billing_cycle: BillingCycle;
   price: PlanPrice;
-  notes?: string;
+  notes?: string | null;
   price_trend?: PriceTrend;
 }
 
