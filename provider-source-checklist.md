@@ -131,7 +131,7 @@ Statuses: `seed-candidate` means selected for manual seed validation but not yet
 | Provider | Category | Official site | Pricing page | Cancellation page | Help center | Icon URL | Icon source type | App Store ID or official provenance URL | Verified at | Automation | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Netflix | streaming | https://www.netflix.com | https://help.netflix.com/en/node/24926 | https://help.netflix.com/en/node/407 | https://help.netflix.com/en | https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/cd/76/f9/cd76f98c-0811-0a8c-7587-715d38832dc9/AppIcon-0-0-1x_U007epad-0-1-0-sRGB-0-85-220.png/512x512bb.jpg | app_store | 363590051 | 2026-10-25 | auto-eligible | data-reviewed | Help center article lists all 3 US plans in static HTML |
-| Amazon Prime Video | streaming | https://www.amazon.com/primevideo | https://www.amazon.com/amazonprime | https://www.primevideo.com/help?nodeId=GWGDSNXVPJ93UW5V | https://www.primevideo.com/region/na/help | https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/36/ae/4c/36ae4c07-4a4d-8870-d7bc-e4329b9fe281/AppIcon-0-0-1x_U007epad-0-1-0-0-85-220.png/512x512bb.jpg | app_store | 545519333 | 2026-10-25 | auto-eligible | data-reviewed | Prime Monthly ($14.99) and Annual ($139) public; Prime Video Ultra ad-free upgrade ($4.99) is account_required |
+| Amazon Prime Video | streaming | https://www.amazon.com/primevideo | https://www.amazon.com/amazonprime | https://www.primevideo.com/help?nodeId=GWGDSNXVPJ93UW5V | https://www.primevideo.com/region/na/help | https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/36/ae/4c/36ae4c07-4a4d-8870-d7bc-e4329b9fe281/AppIcon-0-0-1x_U007epad-0-1-0-0-85-220.png/512x512bb.jpg | app_store | 545519333 | 2026-10-25 | auto-eligible | data-reviewed | Prime Monthly ($14.99) and Annual ($139) public; Prime Video Ultra ad-free upgrade ($4.99) is account_required and stays manual |
 | Spotify | music_audio | https://www.spotify.com/us/ | https://www.spotify.com/us/premium/#plans | https://support.spotify.com/us/article/cancel-premium/ | https://support.spotify.com/us/ | https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/5f/b6/e0/5fb6e0c6-cea6-e107-8d54-8e8fcec573ce/AppIcon-0-0-1x_U007epad-0-1-0-0-sRGB-85-220.png/512x512bb.jpg | app_store | 324684580 | 2026-10-25 | auto-eligible | data-reviewed | Individual ($12.99), Duo ($18.99), Family ($21.99), Student ($6.99) verified |
 
 ## Collection workflow
@@ -162,8 +162,10 @@ Statuses: `seed-candidate` means selected for manual seed validation but not yet
 
 These labels describe plan extraction eligibility. Icon health checks and approved-ID App Store lookups can be assessed independently, subject to source terms and access restrictions.
 
-- `auto-eligible`: public, static pricing page; can be monitored by the scheduled pipeline
-- `manual-only`: JS-heavy, bot-blocked, terms-restricted, or account-gated; re-verify by hand when flagged stale
+- `auto-eligible`: public, static pricing page; its public plans can be monitored by the scheduled pipeline
+- `manual-only`: JS-heavy, bot-blocked, terms-restricted, or every plan is account-gated; re-verify by hand when flagged stale
+
+An `account_required` plan is always manual, even inside an `auto-eligible` provider; the schema rejects `source.method: automated` on those plans.
 
 ## Working status legend
 

@@ -25,7 +25,7 @@
           "amount": 14.99,
           "currency": "USD"
         },
-        "notes": "Prime Video bundled with Amazon Prime membership.",
+        "notes": "Prime Video bundled with Amazon Prime membership. Free trial for eligible new members, then $14.99/month.",
         "url_visibility": "public",
         "source": {
           "url": "https://www.amazon.com/amazonprime",
@@ -42,7 +42,7 @@
           "amount": 139,
           "currency": "USD"
         },
-        "notes": "Annual Amazon Prime membership that includes Prime Video.",
+        "notes": "Annual Amazon Prime membership that includes Prime Video. Free trial for eligible new members, then $139/year.",
         "url_visibility": "public",
         "source": {
           "url": "https://www.amazon.com/amazonprime",
