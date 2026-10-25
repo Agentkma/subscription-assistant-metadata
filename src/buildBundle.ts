@@ -2,7 +2,13 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { supportedCategories } from './schema.js';
-import type { CategoryRecord, ProviderRecord, ProvidersBundle, VersionManifest } from './types.js';
+import type {
+  CategoryDefinition,
+  CategoryRecord,
+  ProviderRecord,
+  ProvidersBundle,
+  VersionManifest
+} from './types.js';
 import { validateProvidersDirectory } from './validateProviders.js';
 
 export const BUNDLE_VERSION = '0.1.0';
@@ -20,8 +26,6 @@ export interface BuildBundleResult {
   bundle: ProvidersBundle;
   version: VersionManifest;
 }
-
-type CategoryInput = Omit<CategoryRecord, 'provider_count'>;
 
 async function loadValidProviders(providersDir: string): Promise<ProviderRecord[]> {
   const results = await validateProvidersDirectory(providersDir);
@@ -46,8 +50,8 @@ async function loadValidProviders(providersDir: string): Promise<ProviderRecord[
   return providers.sort((a, b) => (a.provider_id < b.provider_id ? -1 : a.provider_id > b.provider_id ? 1 : 0));
 }
 
-function isCategoryInput(value: unknown): value is CategoryInput {
-  const candidate = value as Partial<CategoryInput> | null;
+function isCategoryDefinition(value: unknown): value is CategoryDefinition {
+  const candidate = value as Partial<CategoryDefinition> | null;
   return (
     typeof candidate === 'object' &&
     candidate !== null &&
@@ -57,10 +61,10 @@ function isCategoryInput(value: unknown): value is CategoryInput {
   );
 }
 
-async function loadCategories(categoriesFile: string): Promise<CategoryInput[]> {
+async function loadCategories(categoriesFile: string): Promise<CategoryDefinition[]> {
   const parsed: unknown = JSON.parse(await fs.readFile(categoriesFile, 'utf8'));
 
-  if (!Array.isArray(parsed) || !parsed.every(isCategoryInput)) {
+  if (!Array.isArray(parsed) || !parsed.every(isCategoryDefinition)) {
     throw new Error(`${categoriesFile} must be an array of { id, name, display_name } records`);
   }
 
@@ -81,7 +85,7 @@ async function loadCategories(categoriesFile: string): Promise<CategoryInput[]> 
 }
 
 // provider_count is derived at build time; categories.json does not store it.
-function withPublishedProviderCounts(categories: CategoryInput[], providers: ProviderRecord[]): CategoryRecord[] {
+function withPublishedProviderCounts(categories: CategoryDefinition[], providers: ProviderRecord[]): CategoryRecord[] {
   return categories.map(({ id, name, display_name }) => ({
     id,
     name,

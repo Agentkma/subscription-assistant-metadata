@@ -129,10 +129,13 @@ export interface ProviderRecord {
   regional_overrides: Partial<Record<SupportedRegion, ProviderOverride>>;
 }
 
-export interface CategoryRecord {
+export interface CategoryDefinition {
   id: string;
   name: string;
   display_name: string;
+}
+
+export interface CategoryRecord extends CategoryDefinition {
   provider_count: number;
 }
 
