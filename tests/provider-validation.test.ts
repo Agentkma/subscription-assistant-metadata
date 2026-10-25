@@ -29,17 +29,17 @@ const readProvider = async (file: string) => JSON.parse(await fs.readFile(file, 
 interface ProviderFixture {
   default: {
     plans: Array<{
-      plan_id: string;
+      planId: string;
       source?: {
         url?: string | null;
-        verified_at?: string;
+        verifiedAt?: string;
         method?: string;
         evidence?: string | null;
       };
-      url_visibility?: string;
-      access_hint?: string | null;
+      urlVisibility?: string;
+      accessHint?: string | null;
       price: { amount: number; currency: string };
-      price_trend?: { trend: string };
+      priceTrend?: { trend: string };
       [key: string]: unknown;
     }>;
     logo: { url?: string | null; source?: unknown; [key: string]: unknown };
@@ -47,11 +47,11 @@ interface ProviderFixture {
       official?: string | null;
       pricing?: string | null;
       cancellation?: string | null;
-      help_center?: string | null;
+      helpCenter?: string | null;
       [key: string]: unknown;
     };
   };
-  regional_overrides: Record<
+  regionalOverrides: Record<
     string,
     {
       plans?: ProviderFixture['default']['plans'];
@@ -68,7 +68,7 @@ interface ProviderValidationCase {
 }
 
 const accountGatedPlan = (provider: ProviderFixture) => {
-  const plan = provider.default.plans.find((candidate) => candidate.url_visibility === 'account_required');
+  const plan = provider.default.plans.find((candidate) => candidate.urlVisibility === 'account_required');
   assert.ok(plan, 'fixture must contain an account_required plan');
   return plan;
 };
@@ -111,22 +111,22 @@ test('public contract accepts optional insights, recommendations, and plan trend
 
   const withInsights = structuredClone(provider);
   withInsights.default.intelligence = {
-    seasonal_pattern: 'none',
-    value_drift_signals: ['price_increase'],
-    cancellation_difficulty: 3,
-    benchmark_anchor: { category_rank: 1, value_score_baseline: 0.8 }
+    seasonalPattern: 'none',
+    valueDriftSignals: ['price_increase'],
+    cancellationDifficulty: 3,
+    benchmarkAnchor: { categoryRank: 1, valueScoreBaseline: 0.8 }
   };
-  withInsights.default.recommendations = { alternatives: [], upgrade_paths: [] };
+  withInsights.default.recommendations = { alternatives: [], upgradePaths: [] };
   assert.equal(isSchemaValid(withInsights), true);
 
-  withInsights.default.intelligence.cancellation_difficulty = 6;
+  withInsights.default.intelligence.cancellationDifficulty = 6;
   assert.equal(isSchemaValid(withInsights), false);
 
   const withPlanTrend = structuredClone(provider);
-  withPlanTrend.default.plans[0].price_trend = { trend: 'flat' };
+  withPlanTrend.default.plans[0].priceTrend = { trend: 'flat' };
   assert.equal(isSchemaValid(withPlanTrend), true);
 
-  withPlanTrend.default.plans[0].price_trend = { trend: 'sideways' };
+  withPlanTrend.default.plans[0].priceTrend = { trend: 'sideways' };
   assert.equal(isSchemaValid(withPlanTrend), false);
 });
 
@@ -183,14 +183,14 @@ test('validates account-gated plan provenance', async (context) => {
       name: 'rejects a missing access hint',
       valid: false,
       mutate: (provider) => {
-        delete accountGatedPlan(provider).access_hint;
+        delete accountGatedPlan(provider).accessHint;
       }
     },
     {
       name: 'rejects an empty access hint',
       valid: false,
       mutate: (provider) => {
-        accountGatedPlan(provider).access_hint = '';
+        accountGatedPlan(provider).accessHint = '';
       }
     },
     {
@@ -249,7 +249,7 @@ test('validates plan price and provenance constraints', async (context) => {
       name: 'rejects an invalid verification date',
       valid: false,
       mutate: (provider) => {
-        provider.default.plans[0].source!.verified_at = 'not-a-date';
+        provider.default.plans[0].source!.verifiedAt = 'not-a-date';
       }
     },
     {
@@ -291,8 +291,8 @@ test('validates plan price and provenance constraints', async (context) => {
       name: 'applies source URL constraints to regional plan overrides',
       valid: false,
       mutate: (provider) => {
-        provider.regional_overrides.US.plans = [structuredClone(provider.default.plans[0])];
-        provider.regional_overrides.US.plans[0].source!.url = 'http://www.netflix.com/signup';
+        provider.regionalOverrides.US.plans = [structuredClone(provider.default.plans[0])];
+        provider.regionalOverrides.US.plans[0].source!.url = 'http://www.netflix.com/signup';
       }
     }
   ]);
@@ -329,10 +329,10 @@ test('validates logo URL and source combinations', async (context) => {
     })),
     ...[
       [{ type: 'app_store' }, 'App Store source without an ID'],
-      [{ type: 'app_store', app_store_id: '' }, 'empty App Store ID'],
-      [{ type: 'app_store', app_store_id: 'spotify' }, 'non-numeric App Store ID'],
-      [{ type: 'app_store', app_store_id: null }, 'null App Store ID'],
-      [{ type: 'app_store', app_store_id: '324684580', url: 'https://www.spotify.com' }, 'extra field in App Store source'],
+      [{ type: 'app_store', appStoreId: '' }, 'empty App Store ID'],
+      [{ type: 'app_store', appStoreId: 'spotify' }, 'non-numeric App Store ID'],
+      [{ type: 'app_store', appStoreId: null }, 'null App Store ID'],
+      [{ type: 'app_store', appStoreId: '324684580', url: 'https://www.spotify.com' }, 'extra field in App Store source'],
       [{ type: 'official' }, 'official source without a URL'],
       [{ type: 'official', url: 'not a URL' }, 'malformed official source URL'],
       [{ type: 'official', url: 'http://www.spotify.com' }, 'non-HTTPS official source URL'],
@@ -356,7 +356,7 @@ test('validates logo URL and source combinations', async (context) => {
       valid: false,
       mutate: (provider) => {
         provider.default.logo.source = 'fallback';
-        provider.default.logo.app_store_id = '324684580';
+        provider.default.logo.appStoreId = '324684580';
         provider.default.logo.cdn_url = provider.default.logo.url;
       }
     },
@@ -371,14 +371,14 @@ test('validates logo URL and source combinations', async (context) => {
       name: 'accepts a valid regional logo override',
       valid: true,
       mutate: (provider) => {
-        provider.regional_overrides.US.logo = structuredClone(provider.default.logo);
+        provider.regionalOverrides.US.logo = structuredClone(provider.default.logo);
       }
     },
     {
       name: 'rejects an invalid regional logo override',
       valid: false,
       mutate: (provider) => {
-        provider.regional_overrides.US.logo = { source: 'fallback' };
+        provider.regionalOverrides.US.logo = { source: 'fallback' };
       }
     }
   ]);
@@ -422,21 +422,21 @@ test('validates HTTPS URLs across provider and regional override URL blocks', as
       name: 'rejects unknown field in regional override urls',
       valid: false,
       mutate: (provider) => {
-        provider.regional_overrides.US.urls = { extra: 'https://www.amazon.com' };
+        provider.regionalOverrides.US.urls = { extra: 'https://www.amazon.com' };
       }
     },
     {
       name: 'rejects HTTP URL in regional override urls',
       valid: false,
       mutate: (provider) => {
-        provider.regional_overrides.US.urls = { pricing: 'http://www.amazon.com/amazonprime' };
+        provider.regionalOverrides.US.urls = { pricing: 'http://www.amazon.com/amazonprime' };
       }
     },
     {
       name: 'accepts valid HTTPS URLs in regional override urls',
       valid: true,
       mutate: (provider) => {
-        provider.regional_overrides.US.urls = { pricing: 'https://www.amazon.com/amazonprime' };
+        provider.regionalOverrides.US.urls = { pricing: 'https://www.amazon.com/amazonprime' };
       }
     }
   ]);
@@ -446,15 +446,15 @@ test('enforces semantic invariants for regions, plan IDs, and file paths', async
   const baseProvider = await readProvider(netflixFile);
 
   const mismatchedRegion = structuredClone(baseProvider);
-  mismatchedRegion.default_region = 'CA';
-  assert.match(findProviderSemanticErrors(mismatchedRegion).join('; '), /default_region/);
+  mismatchedRegion.defaultRegion = 'CA';
+  assert.match(findProviderSemanticErrors(mismatchedRegion).join('; '), /defaultRegion/);
 
   const duplicateDefaultPlans = structuredClone(baseProvider);
-  duplicateDefaultPlans.default.plans[1].plan_id = duplicateDefaultPlans.default.plans[0].plan_id;
-  assert.match(findProviderSemanticErrors(duplicateDefaultPlans).join('; '), /duplicate plan_id/);
+  duplicateDefaultPlans.default.plans[1].planId = duplicateDefaultPlans.default.plans[0].planId;
+  assert.match(findProviderSemanticErrors(duplicateDefaultPlans).join('; '), /duplicate planId/);
 
   const duplicateRegionalPlans = structuredClone(baseProvider);
-  duplicateRegionalPlans.regional_overrides.US = {
+  duplicateRegionalPlans.regionalOverrides.US = {
     plans: [
       structuredClone(baseProvider.default.plans[0]),
       structuredClone(baseProvider.default.plans[0])
@@ -462,7 +462,7 @@ test('enforces semantic invariants for regions, plan IDs, and file paths', async
   };
   assert.match(
     findProviderSemanticErrors(duplicateRegionalPlans).join('; '),
-    /regional_overrides\/US\/plans duplicate plan_id/
+    /regionalOverrides\/US\/plans duplicate planId/
   );
 
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'provider-validation-'));
@@ -522,18 +522,18 @@ test('enforces semantic invariants for regions, plan IDs, and file paths', async
 
 test('rejects regional overrides for regions not listed in regions', async () => {
   const provider = await readProvider(netflixFile);
-  provider.regional_overrides.CA = {};
-  assert.match(findProviderSemanticErrors(provider).join('; '), /regional_overrides\/CA region "CA" must be included/);
+  provider.regionalOverrides.CA = {};
+  assert.match(findProviderSemanticErrors(provider).join('; '), /regionalOverrides\/CA region "CA" must be included/);
 });
 
 test('rejects verification dates in the future', async () => {
   const provider = await readProvider(netflixFile);
-  provider.default.plans[0].source.verified_at = '2026-01-02';
+  provider.default.plans[0].source.verifiedAt = '2026-01-02';
 
   assert.deepEqual(findProviderSemanticErrors(provider, { maxVerifiedAt: '2026-12-31' }), []);
   assert.match(
     findProviderSemanticErrors(provider, { maxVerifiedAt: '2026-01-01' }).join('; '),
-    /default\/plans\/0\/source\/verified_at "2026-01-02" must not be in the future/
+    /default\/plans\/0\/source\/verifiedAt "2026-01-02" must not be in the future/
   );
 });
 
@@ -568,19 +568,19 @@ test('requires upgrade path targets to reference existing plans', async () => {
 
   provider.default.recommendations = {
     alternatives: [],
-    upgrade_paths: [{ target_plan_id: firstPlan.plan_id, reason: 'valid target' }]
+    upgradePaths: [{ targetPlanId: firstPlan.planId, reason: 'valid target' }]
   };
   assert.deepEqual(findProviderSemanticErrors(provider), []);
 
-  provider.default.recommendations.upgrade_paths.push({ target_plan_id: 'missing_plan', reason: 'bad target' });
+  provider.default.recommendations.upgradePaths.push({ targetPlanId: 'missing_plan', reason: 'bad target' });
   assert.match(
     findProviderSemanticErrors(provider).join('; '),
-    /upgrade_paths\/1\/target_plan_id "missing_plan" does not match any plan_id/
+    /upgradePaths\/1\/targetPlanId "missing_plan" does not match any planId/
   );
 
-  provider.default.recommendations.upgrade_paths.pop();
-  provider.regional_overrides.US = {
-    recommendations: { alternatives: [], upgrade_paths: [{ target_plan_id: firstPlan.plan_id, reason: 'inherits default plans' }] }
+  provider.default.recommendations.upgradePaths.pop();
+  provider.regionalOverrides.US = {
+    recommendations: { alternatives: [], upgradePaths: [{ targetPlanId: firstPlan.planId, reason: 'inherits default plans' }] }
   };
   assert.deepEqual(findProviderSemanticErrors(provider), []);
 });

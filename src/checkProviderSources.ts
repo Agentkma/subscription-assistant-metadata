@@ -50,7 +50,7 @@ function createSource(url: string | null | undefined, kind: SourceKind): Provide
 function getMetadataSections(provider: ProviderRecord): MetadataSection[] {
   return [
     provider.default,
-    ...Object.values(provider.regional_overrides).filter(isProviderOverride)
+    ...Object.values(provider.regionalOverrides).filter(isProviderOverride)
   ];
 }
 
@@ -65,7 +65,7 @@ function collectSectionSources(section: MetadataSection): ProviderSource[] {
     ...createSource(section.urls?.official, 'page'),
     ...createSource(section.urls?.pricing, 'page'),
     ...createSource(section.urls?.cancellation, 'page'),
-    ...createSource(section.urls?.help_center, 'page'),
+    ...createSource(section.urls?.helpCenter, 'page'),
     ...(section.plans ?? []).flatMap(collectPlanSources)
   ];
 }

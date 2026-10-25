@@ -8,7 +8,7 @@ Ship the initial vertical slice for the private SubSage app: verify the 3 seed p
    - Run `npm run check:sources` and query Apple's iTunes Lookup API for Netflix (`363590051`), Amazon Prime Video (`545519333`), and Spotify (`324684580`) to confirm current `artworkUrl512` icon URLs and publisher identity.
    - Check the live US pricing pages for Netflix, Amazon Prime Video, and Spotify to confirm plan names, standard recurring monthly/yearly prices, and verbatim `source.evidence` snippets where available.
 2. **Update seed JSON files and checklist status** (*depends on step 1*)
-   - Update `netflix.json`, `amazon_prime_video.json`, and `spotify.json` with confirmed prices, current `verified_at` date, and any refreshed `logo.url`.
+   - Update `netflix.json`, `amazon_prime_video.json`, and `spotify.json` with confirmed prices, current `verifiedAt` date, and any refreshed `logo.url`.
    - Update `provider-source-checklist.md` to record the verified seed entries and transition the 3 seed rows from `seed-candidate` to `data-reviewed`.
 
 ### Phase 2: Deterministic Bundle Builder (`dist/providers.json` & `dist/version.json`)
@@ -19,12 +19,12 @@ Ship the initial vertical slice for the private SubSage app: verify the 3 seed p
 2. **Implement `src/buildBundle.ts`** (*depends on step 3*)
    - Reuse `validateProvidersDirectory` from `validateProviders.ts:139` so the build fails fast if any provider file fails schema or semantic validation.
    - Read and validate `categories.json` against `supportedCategories` from `schema.ts:2`.
-   - Load all valid `ProviderRecord` files and sort deterministically by `provider_id` (ascending).
+   - Load all valid `ProviderRecord` files and sort deterministically by `providerId` (ascending).
    - Resolve `gitSha` (from `GITHUB_SHA` env var or `git rev-parse --short HEAD` fallback) and `publishedAt` ISO timestamp (injectable for deterministic tests).
    - Write `dist/providers.json` and `dist/version.json`.
 3. **Add `npm run build` script and unit tests** (*depends on step 4*)
    - Add `"build": "tsx src/buildBundle.ts"` to `package.json`.
-   - Add `tests/build-bundle.test.ts` covering bundle + version manifest output, deterministic provider ordering by `provider_id`, inclusion of all 10 categories and 3 seeds at `0.1.0`, and failure when a provider file is invalid.
+   - Add `tests/build-bundle.test.ts` covering bundle + version manifest output, deterministic provider ordering by `providerId`, inclusion of all 10 categories and 3 seeds at `0.1.0`, and failure when a provider file is invalid.
    - Add `npm run build` to `validate.yml` so PRs verify the bundle builds cleanly.
 
 ### Phase 3: GitHub Pages Publishing Workflow & Docs
@@ -38,9 +38,9 @@ Ship the initial vertical slice for the private SubSage app: verify the 3 seed p
 
 ### Relevant files
 
-- `netflix.json` — verify plans, prices, `verified_at`, and `logo.url`
-- `amazon_prime_video.json` — verify plans, prices, `verified_at`, and `logo.url`
-- `spotify.json` — verify plans, prices, `verified_at`, and `logo.url`
+- `netflix.json` — verify plans, prices, `verifiedAt`, and `logo.url`
+- `amazon_prime_video.json` — verify plans, prices, `verifiedAt`, and `logo.url`
+- `spotify.json` — verify plans, prices, `verifiedAt`, and `logo.url`
 - `provider-source-checklist.md` — mark the 3 seeds `data-reviewed`
 - `types.ts` — add `CategoryRecord`, `VersionManifest`, and `ProvidersBundle` interfaces
 - `src/buildBundle.ts` — new deterministic bundle generator reusing `validateProvidersDirectory` from `validateProviders.ts:139`

@@ -2,51 +2,51 @@
   {
     "id": "streaming",
     "name": "Streaming",
-    "display_name": "Streaming"
+    "displayName": "Streaming"
   },
   {
     "id": "music_audio",
     "name": "Music & Audio",
-    "display_name": "Music & Audio"
+    "displayName": "Music & Audio"
   },
   {
     "id": "productivity",
     "name": "Productivity",
-    "display_name": "Productivity"
+    "displayName": "Productivity"
   },
   {
     "id": "fitness_wellness",
     "name": "Fitness & Wellness",
-    "display_name": "Fitness & Wellness"
+    "displayName": "Fitness & Wellness"
   },
   {
     "id": "learning",
     "name": "Learning",
-    "display_name": "Learning"
+    "displayName": "Learning"
   },
   {
     "id": "gaming",
     "name": "Gaming",
-    "display_name": "Gaming"
+    "displayName": "Gaming"
   },
   {
     "id": "news_reading",
     "name": "News & Reading",
-    "display_name": "News & Reading"
+    "displayName": "News & Reading"
   },
   {
     "id": "utilities_tools",
     "name": "Utilities & Tools",
-    "display_name": "Utilities & Tools"
+    "displayName": "Utilities & Tools"
   },
   {
     "id": "lifestyle",
     "name": "Lifestyle",
-    "display_name": "Lifestyle"
+    "displayName": "Lifestyle"
   },
   {
     "id": "shopping_memberships",
     "name": "Shopping & Memberships",
-    "display_name": "Shopping & Memberships"
+    "displayName": "Shopping & Memberships"
   }
 ]

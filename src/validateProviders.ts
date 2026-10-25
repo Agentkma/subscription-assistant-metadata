@@ -31,7 +31,7 @@ export interface ProviderValidationResult {
 export interface ProviderSemanticOptions {
   expectedProviderId?: string;
   expectedCategory?: string;
-  /** Latest allowed `source.verified_at` (YYYY-MM-DD). Defaults to tomorrow in UTC. */
+  /** Latest allowed `source.verifiedAt` (YYYY-MM-DD). Defaults to tomorrow in UTC. */
   maxVerifiedAt?: string;
 }
 
@@ -80,10 +80,10 @@ function findPlanSourceErrors(
 
   for (const [index, plan] of (plans ?? []).entries()) {
     const planLocation = `${location}/${index}`;
-    const verifiedInFuture = isAfterDate(plan.source.verified_at, maxVerifiedAt);
+    const verifiedInFuture = isAfterDate(plan.source.verifiedAt, maxVerifiedAt);
 
     if (verifiedInFuture) {
-      errors.push(`${planLocation}/source/verified_at "${plan.source.verified_at}" must not be in the future`);
+      errors.push(`${planLocation}/source/verifiedAt "${plan.source.verifiedAt}" must not be in the future`);
     }
 
     if (evidenceOmitsPrice(plan)) {
@@ -101,12 +101,12 @@ function findUpgradePathErrors(
 ): string[] {
   const errors: string[] = [];
 
-  for (const [index, upgradePath] of (scope?.recommendations?.upgrade_paths ?? []).entries()) {
-    const targetsUnknownPlan = !knownPlanIds.has(upgradePath.target_plan_id);
+  for (const [index, upgradePath] of (scope?.recommendations?.upgradePaths ?? []).entries()) {
+    const targetsUnknownPlan = !knownPlanIds.has(upgradePath.targetPlanId);
 
     if (targetsUnknownPlan) {
       errors.push(
-        `${location}/recommendations/upgrade_paths/${index}/target_plan_id "${upgradePath.target_plan_id}" does not match any plan_id`
+        `${location}/recommendations/upgradePaths/${index}/targetPlanId "${upgradePath.targetPlanId}" does not match any planId`
       );
     }
   }
@@ -118,7 +118,7 @@ const isListedRegion = (provider: ProviderRecord, region: string): boolean =>
   provider.regions.some((listedRegion) => listedRegion === region);
 
 const collectPlanIds = (...planLists: Array<ProviderPlan[] | undefined>): Set<string> =>
-  new Set(planLists.flatMap((plans) => plans ?? []).map((plan) => plan.plan_id));
+  new Set(planLists.flatMap((plans) => plans ?? []).map((plan) => plan.planId));
 
 function findDuplicatePlanIdErrors(plans: ProviderPlan[] | undefined, location: string): string[] {
   if (!plans) {
@@ -129,13 +129,13 @@ function findDuplicatePlanIdErrors(plans: ProviderPlan[] | undefined, location: 
   const duplicates = new Set<string>();
 
   for (const plan of plans) {
-    if (seen.has(plan.plan_id)) {
-      duplicates.add(plan.plan_id);
+    if (seen.has(plan.planId)) {
+      duplicates.add(plan.planId);
     }
-    seen.add(plan.plan_id);
+    seen.add(plan.planId);
   }
 
-  return [...duplicates].map((planId) => `${location} duplicate plan_id "${planId}"`);
+  return [...duplicates].map((planId) => `${location} duplicate planId "${planId}"`);
 }
 
 // The default block and each regional override follow the same plan and recommendation rules.
@@ -159,14 +159,14 @@ export function findProviderSemanticErrors(
   const errors: string[] = [];
   const maxVerifiedAt = options.maxVerifiedAt ?? latestAllowedVerificationDate();
 
-  if (!isListedRegion(provider, provider.default_region)) {
-    errors.push(`/default_region "${provider.default_region}" must be included in /regions`);
+  if (!isListedRegion(provider, provider.defaultRegion)) {
+    errors.push(`/defaultRegion "${provider.defaultRegion}" must be included in /regions`);
   }
 
   errors.push(...findScopeErrors(provider.default, '/default', collectPlanIds(provider.default.plans), maxVerifiedAt));
 
-  for (const [region, override] of Object.entries(provider.regional_overrides)) {
-    const location = `/regional_overrides/${region}`;
+  for (const [region, override] of Object.entries(provider.regionalOverrides)) {
+    const location = `/regionalOverrides/${region}`;
 
     if (!isListedRegion(provider, region)) {
       errors.push(`${location} region "${region}" must be included in /regions`);
@@ -177,12 +177,12 @@ export function findProviderSemanticErrors(
   }
 
   const providerIdMismatchesFilename =
-    Boolean(options.expectedProviderId) && provider.provider_id !== options.expectedProviderId;
+    Boolean(options.expectedProviderId) && provider.providerId !== options.expectedProviderId;
   const categoryMismatchesDirectory =
     Boolean(options.expectedCategory) && provider.category !== options.expectedCategory;
 
   if (providerIdMismatchesFilename) {
-    errors.push(`/provider_id "${provider.provider_id}" must match filename "${options.expectedProviderId}.json"`);
+    errors.push(`/providerId "${provider.providerId}" must match filename "${options.expectedProviderId}.json"`);
   }
 
   if (categoryMismatchesDirectory) {
@@ -268,7 +268,7 @@ export async function validateProvidersDirectory(dirPath: string): Promise<Provi
           file,
           valid: false,
           errors: [
-            `Provider file must be located directly under a category directory (<category>/<provider_id>.json), found "${path.relative(resolvedDir, file)}"`
+            `Provider file must be located directly under a category directory (<category>/<providerId>.json), found "${path.relative(resolvedDir, file)}"`
           ]
         };
       }
@@ -293,7 +293,7 @@ export async function validateProvidersDirectory(dirPath: string): Promise<Provi
 
     if (isDuplicatedProviderId) {
       result.valid = false;
-      result.errors.push(`/provider_id "${providerId}" is duplicated across multiple files`);
+      result.errors.push(`/providerId "${providerId}" is duplicated across multiple files`);
     }
   }
 
