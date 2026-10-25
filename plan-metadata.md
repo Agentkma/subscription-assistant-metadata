@@ -382,7 +382,7 @@ No model is chosen yet; the seed trial (rollout step 3) selects it. The task is 
 
 ### Price history
 
-- Append-only per-plan history (planned at `metadata/history/<providerId>/<planId>.json`) will record the initial verified baseline and each subsequently confirmed price change. Each observation will record `price` (`amount` and ISO 4217 `currency`), region, and `observed_at` date when we confirmed it; do not imply this is the provider's effective change date unless the provider states that date.
+- Append-only per-plan history (planned at `metadata/history/<providerId>/<planId>.json`) will record the initial verified baseline and each subsequently confirmed price change. Each observation will record `price` (`amount` and ISO 4217 `currency`), region, and `observedAt` date when we confirmed it; do not imply this is the provider's effective change date unless the provider states that date.
 - The planned publishing build will include these observations inside the single `dist/providers.json` bundle alongside the current provider/plan records. A scheduled check that finds no price change will update the current plan's `source.verifiedAt` but will not append a duplicate price-history observation.
 - The app derives price trends and any other time-based intelligence from the published history. Optional `plans[].priceTrend` (`trend`, `lastIncrease`, `increasePercent`) is a precomputed convenience, not a substitute for publishing history; omit it until enough verified history exists.
 
