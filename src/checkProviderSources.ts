@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { isRunAsScript } from './isRunAsScript.js';
 import type { ProviderDefault, ProviderOverride, ProviderPlan, ProviderRecord } from './types.js';
 import { validateProvidersDirectory, type ProviderValidationResult } from './validateProviders.js';
 
@@ -267,6 +268,6 @@ function reportFatalError(error: unknown): void {
   process.exitCode = 1;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isRunAsScript(import.meta.url)) {
   void main().catch(reportFatalError);
 }

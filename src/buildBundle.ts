@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { supportedCategories } from './schema.js';
+import { isRunAsScript } from './isRunAsScript.js';
 import type {
   CategoryDefinition,
   CategoryRecord,
@@ -165,6 +166,6 @@ async function main() {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isRunAsScript(import.meta.url)) {
   void main();
 }
