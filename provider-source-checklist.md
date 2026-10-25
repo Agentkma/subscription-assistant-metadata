@@ -75,7 +75,7 @@ Statuses: `seed-candidate` means selected for manual seed validation but not yet
 | music_audio | audible | Audible | queued |
 | music_audio | pandora | Pandora | queued |
 | music_audio | siriusxm | SiriusXM | queued |
-| music_audio | spotify | Spotify | seed-candidate |
+| music_audio | spotify | Spotify | data-reviewed |
 | music_audio | youtube_music | YouTube Music | queued |
 | news_reading | kindle_unlimited | Kindle Unlimited | queued |
 | news_reading | medium | Medium | queued |
@@ -103,13 +103,13 @@ Statuses: `seed-candidate` means selected for manual seed validation but not yet
 | shopping_memberships | sams_club_membership | Sam's Club Membership | queued |
 | shopping_memberships | uber_one | Uber One | queued |
 | shopping_memberships | walmartplus | Walmart+ | queued |
-| streaming | amazon_prime_video | Amazon Prime Video | seed-candidate |
+| streaming | amazon_prime_video | Amazon Prime Video | data-reviewed |
 | streaming | apple_tvplus | Apple TV+ | queued |
 | streaming | crunchyroll | Crunchyroll | queued |
 | streaming | disneyplus | Disney+ | queued |
 | streaming | hulu | Hulu | queued |
 | streaming | max | Max | queued |
-| streaming | netflix | Netflix | seed-candidate |
+| streaming | netflix | Netflix | data-reviewed |
 | streaming | paramountplus | Paramount+ | queued |
 | streaming | peacock | Peacock | queued |
 | streaming | showtime | Showtime | queued |
@@ -130,7 +130,9 @@ Statuses: `seed-candidate` means selected for manual seed validation but not yet
 
 | Provider | Category | Official site | Pricing page | Cancellation page | Help center | Icon URL | Icon source type | App Store ID or official provenance URL | Verified at | Automation | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Example only: Netflix | streaming | https://www.netflix.com | https://help.netflix.com/en/node/24926 | https://help.netflix.com/en/node/407 | https://help.netflix.com | Copy resolved artwork URL after verification | app_store | 363590051 |  |  | template | Example links are not verification evidence |
+| Netflix | streaming | https://www.netflix.com | https://help.netflix.com/en/node/24926 | https://help.netflix.com/en/node/407 | https://help.netflix.com/en | https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/17/ac/4e/17ac4efb-a0a4-e618-c58b-79a2fa4b544d/AppIcon-0-0-1x_U007epad-0-1-0-sRGB-0-85-220.png/512x512bb.jpg | app_store | 363590051 | 2026-10-25 | auto-eligible | data-reviewed | Help center article lists all 3 US plans in static HTML |
+| Amazon Prime Video | streaming | https://www.amazon.com/primevideo | https://www.amazon.com/amazonprime | https://www.primevideo.com/help?nodeId=GWGDSNXVPJ93UW5V | https://www.primevideo.com/region/na/help | https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/2b/f0/ac/2bf0acc8-5fc6-44bf-13b6-9f85937ed415/AppIcon-0-0-1x_U007epad-0-1-0-0-85-220.png/512x512bb.jpg | app_store | 545519333 | 2026-10-25 | auto-eligible | data-reviewed | Prime Monthly ($14.99) and Annual ($139) public; Prime Video Ultra ad-free upgrade ($4.99) is account_required |
+| Spotify | music_audio | https://www.spotify.com/us/ | https://www.spotify.com/us/premium/#plans | https://support.spotify.com/us/article/cancel-premium/ | https://support.spotify.com/us/ | https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/8b/f2/6a/8bf26ab9-3ced-cb5c-a2b3-19f65e7f5cc6/AppIcon-0-0-1x_U007epad-0-1-0-0-85-220.png/512x512bb.jpg | app_store | 324684580 | 2026-10-25 | auto-eligible | data-reviewed | Individual ($12.99), Duo ($18.99), Family ($21.99), Student ($6.99) verified |
 
 ## Collection workflow
 
